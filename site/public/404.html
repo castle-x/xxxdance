@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XXxDance - 文档教程</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .loading {
+      text-align: center;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #06b6d4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    // GitHub Pages SPA 路由支持
+    (function() {
+      var pathSegmentsToKeep = 1;
+      var location = window.location;
+      var repo = location.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/');
+      var redirect = repo + '/?p=' + encodeURIComponent(
+        location.pathname.slice(repo.length) + location.search + location.hash
+      );
+      sessionStorage.setItem('spa-redirect', location.pathname + location.search + location.hash);
+      location.replace(redirect);
+    })();
+  </script>
+</head>
+<body>
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>正在加载...</p>
+  </div>
+</body>
+</html>

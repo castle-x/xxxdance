@@ -1,0 +1,599 @@
+/**
+ * XXxDance 欢迎页
+ * 
+ * 类似 ReactBits 官网的开屏欢迎页面
+ */
+
+import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
+import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Settings2, ChevronLeft, ChevronRight, Play, Image, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { BackgroundRenderer, useBackground } from "@/themes"
+import { cn } from "@/lib/utils"
+import TextType from "@/components/TextType"
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+} from "@/components/ui/dialog"
+
+// 是否为开发模式
+const isDev = import.meta.env.DEV
+
+// Logo 组件
+function Logo({ className }: { className?: string }) {
+	return (
+		<svg 
+			className={cn("h-8 w-8", className)} 
+			viewBox="0 0 32 32" 
+			fill="none"
+		>
+			<circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" />
+			<path 
+				d="M10 16c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6" 
+				stroke="currentColor" 
+				strokeWidth="2" 
+				strokeLinecap="round"
+			/>
+			<circle cx="16" cy="16" r="2" fill="currentColor" />
+		</svg>
+	)
+}
+
+// 教程媒体配置
+interface TutorialMedia {
+	gif: string
+	video: string
+}
+
+// 快速入口项目配置
+const quickLinks = [
+	{
+		id: "route",
+		icon: MapPin,
+		label: "路线引导",
+		title: "如何到达",
+		description: "查看详细的路线指引和交通信息",
+		tutorial: null as TutorialMedia | null,
+	},
+	{
+		id: "wechat",
+		icon: MessageCircle,
+		label: "客服微信",
+		title: "联系客服",
+		description: "扫描二维码添加客服微信",
+		tutorial: null as TutorialMedia | null,
+	},
+	{
+		id: "miniprogram",
+		icon: Smartphone,
+		label: "小程序",
+		title: "打开小程序",
+		description: "扫码或搜索进入小程序",
+		tutorial: null as TutorialMedia | null,
+	},
+	{
+		id: "groupbuy",
+		icon: ShoppingBag,
+		label: "团购核销",
+		title: "团购核销教程",
+		description: "如何使用团购券进行核销",
+		tutorial: {
+			gif: "/static/tutorial/write-off..gif",
+			video: "/static/tutorial/write-off.mp4",
+		} as TutorialMedia,
+	},
+	{
+		id: "booking",
+		icon: CalendarCheck,
+		label: "预订教程",
+		title: "预订流程",
+		description: "如何在线预订课程",
+		tutorial: {
+			gif: "/static/tutorial/booking.gif",
+			video: "/static/tutorial/booking.mp4",
+		} as TutorialMedia,
+	},
+	{
+		id: "action",
+		icon: Smartphone,
+		label: "订单操作",
+		title: "小程序订单操作",
+		description: "通过小程序操作订单的教程",
+		tutorial: {
+			gif: "/static/tutorial/action.gif",
+			video: "/static/tutorial/action.mp4",
+		} as TutorialMedia,
+	},
+]
+
+// 媒体加载状态
+type LoadingState = "idle" | "loading" | "loaded" | "error"
+
+// 教程媒体查看组件
+function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
+	const [showVideo, setShowVideo] = useState(false)
+	const [gifState, setGifState] = useState<LoadingState>("idle")
+	const [videoState, setVideoState] = useState<LoadingState>("idle")
+	const [loadProgress, setLoadProgress] = useState(0)
+	const videoRef = useRef<HTMLVideoElement>(null)
+	
+	// 预加载 GIF
+	useEffect(() => {
+		setGifState("loading")
+		setLoadProgress(0)
+		
+		const img = new window.Image()
+		
+		// 使用 XHR 获取加载进度
+		const xhr = new XMLHttpRequest()
+		xhr.open("GET", tutorial.gif, true)
+		xhr.responseType = "blob"
+		
+		xhr.onprogress = (e) => {
+			if (e.lengthComputable) {
+				const percent = Math.round((e.loaded / e.total) * 100)
+				setLoadProgress(percent)
+			}
+		}
+		
+		xhr.onload = () => {
+			if (xhr.status === 200) {
+				const blob = xhr.response
+				img.src = URL.createObjectURL(blob)
+				img.onload = () => {
+					setGifState("loaded")
+					URL.revokeObjectURL(img.src)
+				}
+			} else {
+				setGifState("error")
+			}
+		}
+		
+		xhr.onerror = () => setGifState("error")
+		xhr.send()
+		
+		return () => xhr.abort()
+	}, [tutorial.gif])
+	
+	// 视频加载进度处理
+	const handleVideoProgress = useCallback(() => {
+		const video = videoRef.current
+		if (video && video.buffered.length > 0) {
+			const buffered = video.buffered.end(video.buffered.length - 1)
+			const duration = video.duration
+			if (duration > 0) {
+				setLoadProgress(Math.round((buffered / duration) * 100))
+			}
+		}
+	}, [])
+	
+	// 切换到视频模式时预加载视频
+	useEffect(() => {
+		if (showVideo && videoState === "idle") {
+			setVideoState("loading")
+			setLoadProgress(0)
+		}
+	}, [showVideo, videoState])
+	
+	return (
+		<div className="space-y-4">
+			{/* 媒体切换按钮 */}
+			<div className="flex justify-center gap-2">
+				<button
+					onClick={() => setShowVideo(false)}
+					className={cn(
+						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+						!showVideo 
+							? "bg-white/20 text-white" 
+							: "bg-white/5 text-white/60 hover:bg-white/10"
+					)}
+				>
+					<Image className="h-4 w-4" />
+					<span>GIF 动图</span>
+				</button>
+				<button
+					onClick={() => setShowVideo(true)}
+					className={cn(
+						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+						showVideo 
+							? "bg-white/20 text-white" 
+							: "bg-white/5 text-white/60 hover:bg-white/10"
+					)}
+				>
+					<Play className="h-4 w-4" />
+					<span>视频教程</span>
+				</button>
+			</div>
+			
+			{/* 媒体内容区域 - 9:16 竖屏比例 */}
+			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16] max-h-[70vh]">
+				{!showVideo ? (
+					// GIF 显示
+					<>
+						{gifState === "loading" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+								<div className="text-center">
+									<p className="text-sm text-white/80">正在加载动图...</p>
+									<p className="text-xs text-white/50 mt-1">请稍候，文件较大需要一点时间</p>
+								</div>
+								{/* 进度条 */}
+								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+									<div 
+										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+										style={{ width: `${loadProgress}%` }}
+									/>
+								</div>
+								<p className="text-xs text-white/40">{loadProgress}%</p>
+							</div>
+						)}
+						{gifState === "loaded" && (
+							<img 
+								src={tutorial.gif} 
+								alt="教程动图"
+								className="w-full h-full object-contain"
+							/>
+						)}
+						{gifState === "error" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+								<p className="text-sm text-red-400">加载失败</p>
+								<p className="text-xs text-white/50">请检查网络后重试</p>
+							</div>
+						)}
+					</>
+				) : (
+					// 视频显示
+					<>
+						{videoState === "loading" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
+								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+								<div className="text-center">
+									<p className="text-sm text-white/80">正在加载视频...</p>
+									<p className="text-xs text-white/50 mt-1">视频加载中，请耐心等待</p>
+								</div>
+								{/* 进度条 */}
+								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+									<div 
+										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+										style={{ width: `${loadProgress}%` }}
+									/>
+								</div>
+								<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
+							</div>
+						)}
+						<video
+							ref={videoRef}
+							src={tutorial.video}
+							controls
+							playsInline
+							className="w-full h-full object-contain"
+							onLoadStart={() => setVideoState("loading")}
+							onCanPlay={() => setVideoState("loaded")}
+							onProgress={handleVideoProgress}
+							onError={() => setVideoState("error")}
+						/>
+						{videoState === "error" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+								<p className="text-sm text-red-400">视频加载失败</p>
+								<p className="text-xs text-white/50">请检查网络后重试</p>
+							</div>
+						)}
+					</>
+				)}
+			</div>
+		</div>
+	)
+}
+
+// 快速入口菜单组件
+function QuickLinksMenu() {
+	const [isOpen, setIsOpen] = useState(false)
+	const [activeDialog, setActiveDialog] = useState<typeof quickLinks[0] | null>(null)
+	
+	return (
+		<>
+			{/* 菜单按钮 - 高级毛玻璃大按钮 */}
+			<div className="relative">
+				<button
+					onClick={() => setIsOpen(!isOpen)}
+					className={cn(
+						"flex items-center gap-2 px-8 py-4 rounded-full text-base font-medium",
+						"bg-white/[0.06] backdrop-blur-2xl",
+						"border border-white/[0.1]",
+						"shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]",
+						"hover:bg-white/[0.1] transition-all duration-200"
+					)}
+				>
+					<span>你感兴趣的都在这里</span>
+					<ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
+				</button>
+				
+				{/* 下拉菜单 - 高级毛玻璃效果 */}
+				{isOpen && (
+					<>
+						<div 
+							className="fixed inset-0 z-40" 
+							onClick={() => setIsOpen(false)} 
+						/>
+						<div className={cn(
+							"absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50",
+							"bg-black/50 backdrop-blur-2xl rounded-2xl",
+							"border border-white/[0.08]",
+							"shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]",
+							"p-2 min-w-[200px]"
+						)}>
+							{quickLinks.map(link => (
+								<button
+									key={link.id}
+									onClick={() => {
+										setActiveDialog(link)
+										setIsOpen(false)
+									}}
+									className={cn(
+										"w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm",
+										"hover:bg-white/[0.08] transition-all duration-150 text-left"
+									)}
+								>
+									<link.icon className="h-4 w-4 text-white/60" />
+									<span className="text-white/90">{link.label}</span>
+								</button>
+							))}
+						</div>
+					</>
+				)}
+			</div>
+			
+			{/* 弹框 */}
+			<Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
+				<DialogContent className={cn(
+					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					activeDialog?.tutorial ? "sm:max-w-sm" : "sm:max-w-md"
+				)}>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							{activeDialog && <activeDialog.icon className="h-5 w-5" />}
+							{activeDialog?.title}
+						</DialogTitle>
+						<DialogDescription>
+							{activeDialog?.description}
+						</DialogDescription>
+					</DialogHeader>
+					
+					{/* 内容区域 */}
+					<div className="mt-4">
+						{activeDialog?.tutorial ? (
+							// 有教程媒体 - 显示 GIF/视频
+							<TutorialMediaViewer tutorial={activeDialog.tutorial} />
+						) : (
+							// 无教程 - 显示占位
+							<div className="min-h-[200px] flex items-center justify-center rounded-lg bg-white/5 border border-white/10">
+								<div className="text-center text-white/50">
+									<p className="text-sm">内容开发中...</p>
+									<p className="text-xs mt-1">后续将展示教程或二维码</p>
+								</div>
+							</div>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
+	)
+}
+
+// 开发模式工具栏组件
+function DevToolbar({ onNavigateLab }: { onNavigateLab: () => void }) {
+	const { selectedId, backgrounds, setBackground } = useBackground()
+	const [isExpanded, setIsExpanded] = useState(false)
+	
+	const visibleBackgrounds = backgrounds.filter(bg => !bg.hidden)
+	const currentIndex = visibleBackgrounds.findIndex(bg => bg.id === selectedId)
+	const currentBg = visibleBackgrounds[currentIndex]
+	
+	const prevBg = () => {
+		const newIndex = currentIndex <= 0 ? visibleBackgrounds.length - 1 : currentIndex - 1
+		setBackground(visibleBackgrounds[newIndex].id)
+	}
+	
+	const nextBg = () => {
+		const newIndex = currentIndex >= visibleBackgrounds.length - 1 ? 0 : currentIndex + 1
+		setBackground(visibleBackgrounds[newIndex].id)
+	}
+	
+	if (!isDev) return null
+	
+	return (
+		<div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+			{/* 球形菜单实验按钮 */}
+			<button
+				onClick={onNavigateLab}
+				className={cn(
+					"p-3 rounded-full",
+					"bg-black/60 backdrop-blur-2xl",
+					"border border-white/10",
+					"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
+					"hover:bg-black/70 transition-colors",
+					"text-lg"
+				)}
+				title="球形菜单实验"
+			>
+				🧪
+			</button>
+			
+			{/* 背景切换器 */}
+			{isExpanded ? (
+				<div className={cn(
+					"p-3 rounded-2xl min-w-[200px]",
+					"bg-black/60 backdrop-blur-2xl",
+					"border border-white/10",
+					"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]"
+				)}>
+					<div className="flex items-center justify-between mb-2">
+						<span className="text-xs text-white/50 font-medium">DEV 背景切换</span>
+						<button 
+							onClick={() => setIsExpanded(false)}
+							className="text-white/50 hover:text-white transition-colors"
+						>
+							<ChevronDown className="h-4 w-4" />
+						</button>
+					</div>
+					<div className="flex items-center gap-2">
+						<button 
+							onClick={prevBg}
+							className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+						>
+							<ChevronLeft className="h-4 w-4" />
+						</button>
+						<div className="flex-1 text-center">
+							<div className="text-sm font-medium">{currentBg?.name}</div>
+							<div className="text-xs text-white/50">{currentIndex + 1} / {visibleBackgrounds.length}</div>
+						</div>
+						<button 
+							onClick={nextBg}
+							className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+						>
+							<ChevronRight className="h-4 w-4" />
+						</button>
+					</div>
+				</div>
+			) : (
+				<button
+					onClick={() => setIsExpanded(true)}
+					className={cn(
+						"p-3 rounded-full",
+						"bg-black/60 backdrop-blur-2xl",
+						"border border-white/10",
+						"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
+						"hover:bg-black/70 transition-colors"
+					)}
+				>
+					<Settings2 className="h-5 w-5 text-white/70" />
+				</button>
+			)}
+		</div>
+	)
+}
+
+interface WelcomePageProps {
+	onNavigate: (page: "home" | "docs" | "lab") => void
+}
+
+export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
+	// 打字效果文本
+	const typingTexts = [
+		"探索舞蹈的无限可能",
+		"让每一步都充满魔力",
+		"专业教程 × 创意灵感",
+	]
+	
+	return (
+		<div className="min-h-screen relative overflow-hidden">
+			{/* 固定背景 - 后续发布时会固定一个 */}
+			<div className="absolute inset-0 z-0">
+				<Suspense fallback={<div className="w-full h-full bg-black" />}>
+					<BackgroundRenderer />
+				</Suspense>
+			</div>
+			
+			{/* 开发模式工具栏 */}
+			<DevToolbar onNavigateLab={() => onNavigate("lab")} />
+			
+			{/* 内容层 */}
+			<div className="relative z-10 min-h-screen flex flex-col">
+				{/* 导航栏 */}
+				<header className="p-4 md:p-6">
+					<nav className={cn(
+						"max-w-6xl mx-auto flex items-center justify-between",
+						"px-6 py-3 rounded-full",
+						// 更高级的毛玻璃效果 - 参考 ReactBits
+						"bg-white/[0.03] backdrop-blur-2xl",
+						"border border-white/[0.08]",
+						"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]"
+					)}>
+						{/* Logo 区域 */}
+						<div className="flex items-center gap-3">
+							<Logo />
+							<span className="text-lg font-bold tracking-tight">
+								XXx' Dance Vision
+							</span>
+						</div>
+						
+						{/* 右侧导航 - 详细教程按钮 */}
+						<button
+							className={cn(
+								"px-5 py-2 rounded-full text-sm font-medium",
+								"bg-white/[0.06] backdrop-blur-xl",
+								"border border-white/[0.1]",
+								"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+								"hover:bg-white/[0.1] transition-all duration-200"
+							)}
+							onClick={() => onNavigate("docs")}
+						>
+							详细教程
+						</button>
+					</nav>
+				</header>
+				
+				{/* 主内容区 */}
+				<main className="flex-1 flex items-center justify-center px-4">
+					<div className="text-center max-w-3xl mx-auto">
+						{/* 标签 - 高级毛玻璃效果 */}
+						<div className={cn(
+							"inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-8",
+							// 更精致的毛玻璃效果
+							"bg-white/[0.06] backdrop-blur-2xl",
+							"border border-white/[0.1]",
+							"shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]"
+						)}>
+							<span className="text-lg">🎉</span>
+							<span className="text-sm font-medium text-white/90">元旦快乐</span>
+						</div>
+						
+						{/* 主标题 - 使用打字效果 */}
+						<h1 className={cn(
+							"text-4xl md:text-5xl lg:text-6xl font-bold mb-6",
+							"tracking-tight leading-tight min-h-[1.2em]"
+						)}>
+							<TextType
+								text={typingTexts}
+								typingSpeed={80}
+								pauseDuration={2000}
+								deletingSpeed={40}
+								showCursor={true}
+								cursorCharacter="|"
+								loop={true}
+								className="bg-gradient-to-br from-white via-zinc-300 to-zinc-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+							/>
+						</h1>
+						
+						{/* 副标题 */}
+						<p className="text-lg md:text-xl mb-10 max-w-xl mx-auto text-white/70">
+							XXx' Dance Vision 为你提供专业的舞蹈教程和创意灵感
+						</p>
+						
+						{/* 按钮组 */}
+						<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+							<Button
+								size="lg"
+								className={cn(
+									"rounded-full px-8 py-6 text-base font-medium",
+									"bg-white text-black hover:bg-white/90"
+								)}
+								onClick={() => {
+									// 跳转到小程序（这里可以替换为实际的小程序链接）
+									window.open("weixin://", "_blank")
+								}}
+							>
+								跳转至小程序
+							</Button>
+							
+							{/* 快速入口菜单 */}
+							<QuickLinksMenu />
+						</div>
+					</div>
+				</main>
+			</div>
+		</div>
+	)
+})

@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "example-tutorial",
+    "title": "示例教程",
+    "content": "# 示例教程\n\n这是一个示例教程文档，展示各种内容格式。\n\n## 文本格式\n\n支持 **粗体**、*斜体*、~~删除线~~ 和 `行内代码`。\n\n## 代码块\n\n```typescript\n// TypeScript 代码示例\nfunction greet(name: string): string {\n  return `Hello, ${name}!`\n}\n\nconsole.log(greet(\"World\"))\n```\n\n## 列表\n\n### 无序列表\n- 第一项\n- 第二项\n  - 嵌套项 A\n  - 嵌套项 B\n- 第三项\n\n### 有序列表\n1. 步骤一\n2. 步骤二\n3. 步骤三\n\n## 引用\n\n> 这是一段引用文字。\n> \n> — 作者名\n\n## 表格\n\n| 功能 | 支持状态 |\n|------|---------|\n| Markdown | ✅ |\n| GIF | ✅ |\n| 视频 | ✅ |\n| 暗黑模式 | ✅ |\n\n## 图片\n\n图片示例（占位）：\n\n![示例图片](/static/logo.png)\n\n## GIF 动画\n\nGIF 动画示例：\n\n![动画示例](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif)\n\n## 视频\n\n视频嵌入示例（使用 video 标签）：\n\n---\n\n**下一步**：查看更多教程文档！\n\n",
+    "order": 0
+  },
+  {
+    "slug": "getting-started",
+    "title": "快速开始",
+    "content": "# 快速开始\n\n欢迎使用 XXxDance 文档站！\n\n## 简介\n\n这是一个专为移动端优化的文档教程展示站点，支持：\n\n- 📝 Markdown 文档\n- 🎬 GIF 动画\n- 📹 视频教程\n- ✨ 精美动画效果\n\n## 开始阅读\n\n选择左侧目录中的文档开始阅读，或在移动端点击菜单图标。\n\n## 主题切换\n\n点击右上角的主题图标可以切换：\n- ☀️ 明亮模式\n- 🌙 暗黑模式  \n- ✨ 魔幻模式（带背景动画）\n\n---\n\n> 💡 **提示**：在魔幻模式下，可以点击右下角的控制面板调整背景效果参数。\n\n",
+    "order": 1
+  }
+]
