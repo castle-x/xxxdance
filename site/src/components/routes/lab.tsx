@@ -32,20 +32,20 @@ const menuItems: MenuItem[] = [
 	{
 		image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=600&fit=crop",
 		link: "#miniprogram",
-		title: "小程序",
-		description: "扫码或搜索进入小程序",
+		title: "小程序码",
+		description: "扫码或微信搜索xxxdance进入小程序",
 	},
 	{
 		image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=600&fit=crop",
 		link: "#groupbuy",
 		title: "团购核销",
-		description: "如何使用团购券进行核销",
+		description: "如何使用美团/大众点评团购券进行核销",
 	},
 	{
 		image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&h=600&fit=crop",
 		link: "#booking",
 		title: "预订教程",
-		description: "如何在线预订课程",
+		description: "如何在小程序预订课程",
 	},
 	{
 		image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&h=600&fit=crop",

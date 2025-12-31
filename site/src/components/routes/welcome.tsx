@@ -5,7 +5,7 @@
  */
 
 import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
-import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Settings2, ChevronLeft, ChevronRight, Play, Image, Loader2 } from "lucide-react"
+import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Settings2, ChevronLeft, ChevronRight, Play, Image, Loader2, Globe, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BackgroundRenderer, useBackground } from "@/themes"
 import { cn } from "@/lib/utils"
@@ -53,32 +53,36 @@ const quickLinks = [
 		id: "route",
 		icon: MapPin,
 		label: "路线引导",
-		title: "如何到达",
-		description: "查看详细的路线指引和交通信息",
+		title: "点击查看原图/下滑查看更多内容",
+		description: "📍上海市普陀区长寿路468号中环商务大厦604室",
+		image: "/static/tutorial/address.png",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
 		id: "wechat",
 		icon: MessageCircle,
 		label: "客服微信",
-		title: "联系客服",
+		title: "点击查看原图保存或长按扫码",
 		description: "扫描二维码添加客服微信",
+		image: "/static/tutorial/service_qrcode.png",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
 		id: "miniprogram",
 		icon: Smartphone,
-		label: "小程序",
-		title: "打开小程序",
-		description: "扫码或搜索进入小程序",
+		label: "小程序码",
+		title: "点击查看原图或长按扫码",
+		description: "扫码或微信搜索xxxdance进入小程序",
+		image: "/static/tutorial/applet_qrcode.png",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
 		id: "groupbuy",
 		icon: ShoppingBag,
 		label: "团购核销",
-		title: "团购核销教程",
-		description: "如何使用团购券进行核销",
+		title: "团购核销",
+		description: "如何使用美团/大众点评团购券进行核销",
+		image: null as string | null,
 		tutorial: {
 			gif: "/static/tutorial/write-off.gif",
 			video: "/static/tutorial/write-off.mp4",
@@ -88,8 +92,9 @@ const quickLinks = [
 		id: "booking",
 		icon: CalendarCheck,
 		label: "预订教程",
-		title: "预订流程",
-		description: "如何在线预订课程",
+		title: "预订教程",
+		description: "如何在小程序预订教室",
+		image: null as string | null,
 		tutorial: {
 			gif: "/static/tutorial/booking.gif",
 			video: "/static/tutorial/booking.mp4",
@@ -98,9 +103,10 @@ const quickLinks = [
 	{
 		id: "action",
 		icon: Smartphone,
-		label: "订单操作",
-		title: "小程序订单操作",
-		description: "通过小程序操作订单的教程",
+		label: "开门开灯",
+		title: "开门开灯",
+		description: "通过小程序开门开灯",
+		image: null as string | null,
 		tutorial: {
 			gif: "/static/tutorial/action.gif",
 			video: "/static/tutorial/action.mp4",
@@ -208,7 +214,7 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 			</div>
 			
 			{/* 媒体内容区域 - 9:16 竖屏比例 */}
-			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16] max-h-[70vh]">
+			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
 				{!showVideo ? (
 					// GIF 显示
 					<>
@@ -233,7 +239,9 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 							<img 
 								src={tutorial.gif} 
 								alt="教程动图"
-								className="w-full h-full object-contain"
+								className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+								onClick={() => window.open(tutorial.gif, '_blank')}
+								title="点击查看原图"
 							/>
 						)}
 						{gifState === "error" && (
@@ -349,6 +357,8 @@ function QuickLinksMenu() {
 			<Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
 				<DialogContent className={cn(
 					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					"max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none",
+					"top-[1rem] translate-y-0",
 					activeDialog?.tutorial ? "sm:max-w-sm" : "sm:max-w-md"
 				)}>
 					<DialogHeader>
@@ -356,18 +366,29 @@ function QuickLinksMenu() {
 							{activeDialog && <activeDialog.icon className="h-5 w-5" />}
 							{activeDialog?.title}
 						</DialogTitle>
-						<DialogDescription>
+						<DialogDescription className="text-left text-base text-white/80">
 							{activeDialog?.description}
 						</DialogDescription>
 					</DialogHeader>
 					
 					{/* 内容区域 */}
-					<div className="mt-4">
+					<div className="mt-2">
 						{activeDialog?.tutorial ? (
 							// 有教程媒体 - 显示 GIF/视频
 							<TutorialMediaViewer tutorial={activeDialog.tutorial} />
+						) : activeDialog?.image ? (
+							// 有静态图片 - 显示图片（点击打开原图）
+							<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+								<img 
+									src={activeDialog.image} 
+									alt={activeDialog.title}
+									className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+									onClick={() => window.open(activeDialog.image!, '_blank')}
+									title="点击查看原图"
+								/>
+							</div>
 						) : (
-							// 无教程 - 显示占位
+							// 无内容 - 显示占位
 							<div className="min-h-[200px] flex items-center justify-center rounded-lg bg-white/5 border border-white/10">
 								<div className="text-center text-white/50">
 									<p className="text-sm">内容开发中...</p>
@@ -383,7 +404,7 @@ function QuickLinksMenu() {
 }
 
 // 开发模式工具栏组件
-function DevToolbar({ onNavigateLab }: { onNavigateLab: () => void }) {
+function DevToolbar() {
 	const { selectedId, backgrounds, setBackground } = useBackground()
 	const [isExpanded, setIsExpanded] = useState(false)
 	
@@ -405,22 +426,6 @@ function DevToolbar({ onNavigateLab }: { onNavigateLab: () => void }) {
 	
 	return (
 		<div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
-			{/* 球形菜单实验按钮 */}
-			<button
-				onClick={onNavigateLab}
-				className={cn(
-					"p-3 rounded-full",
-					"bg-black/60 backdrop-blur-2xl",
-					"border border-white/10",
-					"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
-					"hover:bg-black/70 transition-colors",
-					"text-lg"
-				)}
-				title="球形菜单实验"
-			>
-				🧪
-			</button>
-			
 			{/* 背景切换器 */}
 			{isExpanded ? (
 				<div className={cn(
@@ -482,10 +487,24 @@ interface WelcomePageProps {
 export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 	// 打字效果文本
 	const typingTexts = [
-		"探索舞蹈的无限可能",
-		"让每一步都充满魔力",
-		"专业教程 × 创意灵感",
+		"私密空间 · 自由练习",
+		"你的专属舞蹈练习室",
+		"智能科技 · 沉浸体验",
+		"专业空间 · 自在起舞",
 	]
+	
+	// 背景切换
+	const { selectedId, backgrounds, setBackground } = useBackground()
+	const visibleBackgrounds = backgrounds.filter(bg => !bg.hidden)
+	const currentIndex = visibleBackgrounds.findIndex(bg => bg.id === selectedId)
+	
+	const nextBackground = useCallback(() => {
+		const newIndex = currentIndex >= visibleBackgrounds.length - 1 ? 0 : currentIndex + 1
+		setBackground(visibleBackgrounds[newIndex].id)
+	}, [currentIndex, visibleBackgrounds, setBackground])
+	
+	// 特别活动弹窗
+	const [showEventDialog, setShowEventDialog] = useState(false)
 	
 	return (
 		<div className="min-h-screen relative overflow-hidden">
@@ -497,7 +516,7 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 			</div>
 			
 			{/* 开发模式工具栏 */}
-			<DevToolbar onNavigateLab={() => onNavigate("lab")} />
+			<DevToolbar />
 			
 			{/* 内容层 */}
 			<div className="relative z-10 min-h-screen flex flex-col">
@@ -519,19 +538,54 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 							</span>
 						</div>
 						
-						{/* 右侧导航 - 详细教程按钮 */}
-						<button
-							className={cn(
-								"px-5 py-2 rounded-full text-sm font-medium",
-								"bg-white/[0.06] backdrop-blur-xl",
-								"border border-white/[0.1]",
-								"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-								"hover:bg-white/[0.1] transition-all duration-200"
+						{/* 右侧导航 */}
+						<div className="flex items-center gap-3">
+							{/* 更多按钮 - 暂时隐藏 */}
+							{false && (
+								<button
+									className={cn(
+										"px-5 py-2 rounded-full text-sm font-medium",
+										"bg-white/[0.06] backdrop-blur-xl",
+										"border border-white/[0.1]",
+										"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+										"hover:bg-white/[0.1] transition-all duration-200"
+									)}
+									onClick={() => alert("功能开发中，敬请期待...")}
+								>
+									更多
+								</button>
 							)}
-							onClick={() => onNavigate("docs")}
-						>
-							详细教程
-						</button>
+							
+							{/* 背景切换按钮 */}
+							<button
+								className={cn(
+									"p-2.5 rounded-full",
+									"bg-white/[0.06] backdrop-blur-xl",
+									"border border-white/[0.1]",
+									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+									"hover:bg-white/[0.1] transition-all duration-200"
+								)}
+								onClick={nextBackground}
+								title="切换背景"
+							>
+								<Sparkles className="h-5 w-5" />
+							</button>
+							
+							{/* 球形菜单入口 */}
+							<button
+								className={cn(
+									"p-2.5 rounded-full",
+									"bg-white/[0.06] backdrop-blur-xl",
+									"border border-white/[0.1]",
+									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+									"hover:bg-white/[0.1] transition-all duration-200"
+								)}
+								onClick={() => onNavigate("lab")}
+								title="探索更多"
+							>
+								<Globe className="h-5 w-5" />
+							</button>
+						</div>
 					</nav>
 				</header>
 				
@@ -547,7 +601,7 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 							"shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]"
 						)}>
 							<span className="text-lg">🎉</span>
-							<span className="text-sm font-medium text-white/90">元旦快乐</span>
+							<span className="text-sm font-medium text-white/90">宝子们，新年快乐！</span>
 						</div>
 						
 						{/* 主标题 - 使用打字效果 */}
@@ -569,11 +623,30 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 						
 						{/* 副标题 */}
 						<p className="text-lg md:text-xl mb-10 max-w-xl mx-auto text-white/70">
-							XXx' Dance Vision 为你提供专业的舞蹈教程和创意灵感
+							24小时开放，小程序在线预约，享受私密练舞体验
 						</p>
 						
 						{/* 按钮组 */}
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+							{/* 特别活动按钮 - 喜庆红金渐变 */}
+							<Button
+								size="lg"
+								className={cn(
+									"rounded-full px-8 py-6 text-base font-medium",
+									"bg-gradient-to-r from-red-600 via-orange-500 to-amber-500",
+									"backdrop-blur-xl",
+									"border border-amber-300/30",
+									"shadow-[0_4px_24px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]",
+									"hover:from-red-500 hover:via-orange-400 hover:to-amber-400",
+									"hover:shadow-[0_6px_32px_rgba(234,88,12,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]",
+									"transition-all duration-300",
+									"text-white font-semibold"
+								)}
+								onClick={() => setShowEventDialog(true)}
+							>
+								🎊特别活动
+							</Button>
+							
 							<Button
 								size="lg"
 								className={cn(
@@ -581,11 +654,10 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 									"bg-white text-black hover:bg-white/90"
 								)}
 								onClick={() => {
-									// 跳转到小程序（这里可以替换为实际的小程序链接）
-									window.open("weixin://", "_blank")
+									window.location.href = "#小程序://XXxDanceVision/W3DIoGu2VyvFx9e"
 								}}
 							>
-								跳转至小程序
+								跳转进入小程序
 							</Button>
 							
 							{/* 快速入口菜单 */}
@@ -594,6 +666,38 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 					</div>
 				</main>
 			</div>
+			
+			{/* 特别活动弹窗 */}
+			<Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
+				<DialogContent className={cn(
+					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					"max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none",
+					"top-[1rem] translate-y-0",
+					"sm:max-w-md"
+				)}>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							🎊 新年特别活动
+						</DialogTitle>
+						<DialogDescription className="text-left">
+							新年福利来袭，扫码了解更多优惠详情
+						</DialogDescription>
+					</DialogHeader>
+					
+					{/* 内容区域 */}
+					<div className="mt-4">
+						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+							<img 
+								src="/static/tutorial/newyear.png" 
+								alt="新年特别活动"
+								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+								onClick={() => window.open('/static/tutorial/newyear.png', '_blank')}
+								title="点击查看原图"
+							/>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 })
