@@ -567,7 +567,6 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 	
 	// 小程序弹窗
 	const [showMiniProgramDialog, setShowMiniProgramDialog] = useState(false)
-	const miniProgramLink = "#小程序://XXxDanceVision/W3DIoGu2VyvFx9e"
 	
 	return (
 		<div className="min-h-screen relative overflow-hidden">
@@ -688,7 +687,7 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 						
 						{/* 副标题 */}
 						<p className="text-lg md:text-xl mb-10 max-w-xl mx-auto text-white/70">
-							24小时开放，小程序在线预约，享受私密练舞体验
+							24小时开放，小程序在线预约。
 						</p>
 						
 						{/* 按钮组 */}
@@ -782,34 +781,31 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 			<Dialog open={showMiniProgramDialog} onOpenChange={setShowMiniProgramDialog}>
 				<DialogContent className={cn(
 					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
-					"max-w-[90vw]",
+					"max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none",
+					"top-[1rem] translate-y-0",
 					"sm:max-w-md"
 				)}>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<Smartphone className="h-5 w-5" />
-							跳转小程序
+							小程序码
 						</DialogTitle>
 						<DialogDescription className="text-left text-base text-white/80">
-							点击下方链接打开小程序
+							长按识别或微信搜xxxdance
 						</DialogDescription>
 					</DialogHeader>
 					
-					{/* 小程序链接 */}
-					<div className="mt-4">
-						<a
-							href={miniProgramLink}
-							className={cn(
-								"block w-full p-4 rounded-lg text-center",
-								"bg-gradient-to-r from-green-500 to-emerald-600",
-								"text-white font-medium text-base",
-								"hover:from-green-400 hover:to-emerald-500",
-								"transition-all duration-200",
-								"break-all"
-							)}
-						>
-							{miniProgramLink}
-						</a>
+					{/* 小程序码图片 */}
+					<div className="mt-2">
+						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+							<img 
+								src="/static/tutorial/applet_qrcode.png" 
+								alt="小程序码"
+								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+								onClick={() => window.open('/static/tutorial/applet_qrcode.png', '_blank')}
+								title="点击查看原图"
+							/>
+						</div>
 					</div>
 				</DialogContent>
 			</Dialog>
