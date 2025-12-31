@@ -80,7 +80,7 @@ const quickLinks = [
 		title: "团购核销教程",
 		description: "如何使用团购券进行核销",
 		tutorial: {
-			gif: "/static/tutorial/write-off..gif",
+			gif: "/static/tutorial/write-off.gif",
 			video: "/static/tutorial/write-off.mp4",
 		} as TutorialMedia,
 	},
