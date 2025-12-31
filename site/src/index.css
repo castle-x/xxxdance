@@ -797,6 +797,16 @@ html, body {
 	}
 }
 
+/* AI 风格渐变流动动画 */
+@keyframes gradient-flow {
+	0% {
+		background-position: 0% 50%;
+	}
+	100% {
+		background-position: 300% 50%;
+	}
+}
+
 @property --angle {
 	syntax: '<angle>';
 	initial-value: 0deg;

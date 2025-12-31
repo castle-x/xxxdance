@@ -62,8 +62,8 @@ const quickLinks = [
 		id: "wechat",
 		icon: MessageCircle,
 		label: "客服微信",
-		title: "点击查看原图保存或长按扫码",
-		description: "扫描二维码添加客服微信",
+		title: "客服微信",
+		description: "长按识别或保存图片添加客服微信",
 		image: "/static/tutorial/service_qrcode.png",
 		tutorial: null as TutorialMedia | null,
 	},
@@ -71,8 +71,8 @@ const quickLinks = [
 		id: "miniprogram",
 		icon: Smartphone,
 		label: "小程序码",
-		title: "点击查看原图或长按扫码",
-		description: "扫码或微信搜索xxxdance进入小程序",
+		title: "小程序码",
+		description: "长按识别或微信搜xxxdance",
 		image: "/static/tutorial/applet_qrcode.png",
 		tutorial: null as TutorialMedia | null,
 	},
@@ -117,18 +117,50 @@ const quickLinks = [
 // 媒体加载状态
 type LoadingState = "idle" | "loading" | "loaded" | "error"
 
+// 预加载所有静态图片（首页加载时调用）
+const preloadedImages = new Set<string>()
+
+function preloadImages() {
+	// 收集所有需要预加载的图片
+	const imagesToPreload = [
+		// quickLinks 中的静态图片
+		...quickLinks.filter(link => link.image).map(link => link.image!),
+		// 特别活动图片
+		"/static/tutorial/newyear.png",
+	]
+	
+	imagesToPreload.forEach(src => {
+		if (preloadedImages.has(src)) return
+		preloadedImages.add(src)
+		
+		const img = new window.Image()
+		img.src = src
+	})
+}
+
+// 已预加载的 GIF 记录
+const preloadedGifs = new Set<string>()
+
 // 教程媒体查看组件
 function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
-	const [showVideo, setShowVideo] = useState(false)
+	// 默认展示视频
+	const [showVideo, setShowVideo] = useState(true)
 	const [gifState, setGifState] = useState<LoadingState>("idle")
 	const [videoState, setVideoState] = useState<LoadingState>("idle")
 	const [loadProgress, setLoadProgress] = useState(0)
+	const [gifProgress, setGifProgress] = useState(0)
 	const videoRef = useRef<HTMLVideoElement>(null)
 	
-	// 预加载 GIF
+	// 组件挂载后立即开始后台加载 GIF（无论当前展示什么）
 	useEffect(() => {
+		// 如果已经预加载过，直接标记为已加载
+		if (preloadedGifs.has(tutorial.gif)) {
+			setGifState("loaded")
+			return
+		}
+		
 		setGifState("loading")
-		setLoadProgress(0)
+		setGifProgress(0)
 		
 		const img = new window.Image()
 		
@@ -140,7 +172,11 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 		xhr.onprogress = (e) => {
 			if (e.lengthComputable) {
 				const percent = Math.round((e.loaded / e.total) * 100)
-				setLoadProgress(percent)
+				setGifProgress(percent)
+				// 只有在展示 GIF 时才更新主进度条
+				if (!showVideo) {
+					setLoadProgress(percent)
+				}
 			}
 		}
 		
@@ -150,6 +186,7 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 				img.src = URL.createObjectURL(blob)
 				img.onload = () => {
 					setGifState("loaded")
+					preloadedGifs.add(tutorial.gif)
 					URL.revokeObjectURL(img.src)
 				}
 			} else {
@@ -163,42 +200,37 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 		return () => xhr.abort()
 	}, [tutorial.gif])
 	
+	// 切换到 GIF 时同步进度
+	useEffect(() => {
+		if (!showVideo) {
+			setLoadProgress(gifProgress)
+		}
+	}, [showVideo, gifProgress])
+	
 	// 视频加载进度处理
 	const handleVideoProgress = useCallback(() => {
 		const video = videoRef.current
 		if (video && video.buffered.length > 0) {
 			const buffered = video.buffered.end(video.buffered.length - 1)
 			const duration = video.duration
-			if (duration > 0) {
+			if (duration > 0 && showVideo) {
 				setLoadProgress(Math.round((buffered / duration) * 100))
 			}
 		}
-	}, [])
+	}, [showVideo])
 	
-	// 切换到视频模式时预加载视频
+	// 视频默认开始加载
 	useEffect(() => {
-		if (showVideo && videoState === "idle") {
+		if (videoState === "idle") {
 			setVideoState("loading")
 			setLoadProgress(0)
 		}
-	}, [showVideo, videoState])
+	}, [videoState])
 	
 	return (
 		<div className="space-y-4">
 			{/* 媒体切换按钮 */}
 			<div className="flex justify-center gap-2">
-				<button
-					onClick={() => setShowVideo(false)}
-					className={cn(
-						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-						!showVideo 
-							? "bg-white/20 text-white" 
-							: "bg-white/5 text-white/60 hover:bg-white/10"
-					)}
-				>
-					<Image className="h-4 w-4" />
-					<span>GIF 动图</span>
-				</button>
 				<button
 					onClick={() => setShowVideo(true)}
 					className={cn(
@@ -210,6 +242,22 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 				>
 					<Play className="h-4 w-4" />
 					<span>视频教程</span>
+				</button>
+				<button
+					onClick={() => setShowVideo(false)}
+					className={cn(
+						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+						!showVideo 
+							? "bg-white/20 text-white" 
+							: "bg-white/5 text-white/60 hover:bg-white/10"
+					)}
+				>
+					<Image className="h-4 w-4" />
+					<span>GIF 动图</span>
+					{/* GIF 后台加载指示器 */}
+					{gifState === "loading" && showVideo && (
+						<span className="text-xs text-white/40">({gifProgress}%)</span>
+					)}
 				</button>
 			</div>
 			
@@ -307,7 +355,7 @@ function QuickLinksMenu() {
 				<button
 					onClick={() => setIsOpen(!isOpen)}
 					className={cn(
-						"flex items-center gap-2 px-8 py-4 rounded-full text-base font-medium",
+						"flex items-center gap-2 px-8 h-[52px] rounded-full text-base font-medium",
 						"bg-white/[0.06] backdrop-blur-2xl",
 						"border border-white/[0.1]",
 						"shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]",
@@ -493,6 +541,17 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 		"专业空间 · 自在起舞",
 	]
 	
+	// 首页加载时预加载所有静态图片
+	useEffect(() => {
+		// 使用 requestIdleCallback 在浏览器空闲时预加载，不影响首屏渲染
+		if ('requestIdleCallback' in window) {
+			requestIdleCallback(() => preloadImages())
+		} else {
+			// 降级方案：延迟 1 秒后加载
+			setTimeout(preloadImages, 1000)
+		}
+	}, [])
+	
 	// 背景切换
 	const { selectedId, backgrounds, setBackground } = useBackground()
 	const visibleBackgrounds = backgrounds.filter(bg => !bg.hidden)
@@ -505,6 +564,10 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 	
 	// 特别活动弹窗
 	const [showEventDialog, setShowEventDialog] = useState(false)
+	
+	// 小程序弹窗
+	const [showMiniProgramDialog, setShowMiniProgramDialog] = useState(false)
+	const miniProgramLink = "#小程序://XXxDanceVision/W3DIoGu2VyvFx9e"
 	
 	return (
 		<div className="min-h-screen relative overflow-hidden">
@@ -571,20 +634,22 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 								<Sparkles className="h-5 w-5" />
 							</button>
 							
-							{/* 球形菜单入口 */}
-							<button
-								className={cn(
-									"p-2.5 rounded-full",
-									"bg-white/[0.06] backdrop-blur-xl",
-									"border border-white/[0.1]",
-									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-									"hover:bg-white/[0.1] transition-all duration-200"
-								)}
-								onClick={() => onNavigate("lab")}
-								title="探索更多"
-							>
-								<Globe className="h-5 w-5" />
-							</button>
+							{/* 球形菜单入口 - 暂时隐藏 */}
+							{false && (
+								<button
+									className={cn(
+										"p-2.5 rounded-full",
+										"bg-white/[0.06] backdrop-blur-xl",
+										"border border-white/[0.1]",
+										"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+										"hover:bg-white/[0.1] transition-all duration-200"
+									)}
+									onClick={() => onNavigate("lab")}
+									title="探索更多"
+								>
+									<Globe className="h-5 w-5" />
+								</button>
+							)}
 						</div>
 					</nav>
 				</header>
@@ -628,34 +693,48 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 						
 						{/* 按钮组 */}
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-							{/* 特别活动按钮 - 喜庆红金渐变 */}
-							<Button
-								size="lg"
+							{/* 特别活动按钮 - AI 风格彩色渐变 */}
+							<button
 								className={cn(
-									"rounded-full px-8 py-6 text-base font-medium",
-									"bg-gradient-to-r from-red-600 via-orange-500 to-amber-500",
-									"backdrop-blur-xl",
-									"border border-amber-300/30",
-									"shadow-[0_4px_24px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]",
-									"hover:from-red-500 hover:via-orange-400 hover:to-amber-400",
-									"hover:shadow-[0_6px_32px_rgba(234,88,12,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]",
+									"group relative rounded-full px-8 h-[52px] text-base font-semibold",
+									"text-white overflow-hidden",
 									"transition-all duration-300",
-									"text-white font-semibold"
+									"hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.5)]"
 								)}
 								onClick={() => setShowEventDialog(true)}
 							>
-								🎊特别活动
-							</Button>
+								{/* 渐变背景层 - 流动动画 */}
+								<span className={cn(
+									"absolute inset-0 rounded-full",
+									"bg-[linear-gradient(90deg,#f472b6,#c084fc,#60a5fa,#34d399,#fbbf24,#f472b6)]",
+									"bg-[length:300%_100%]",
+									"animate-[gradient-flow_3s_linear_infinite]"
+								)} />
+								
+								{/* 内层背景 - 半透明遮罩让渐变更柔和 */}
+								<span className="absolute inset-[2px] rounded-full bg-black/30 backdrop-blur-sm" />
+								
+								{/* 光泽效果 */}
+								<span className={cn(
+									"absolute inset-0 rounded-full opacity-0 group-hover:opacity-100",
+									"bg-gradient-to-r from-transparent via-white/20 to-transparent",
+									"translate-x-[-100%] group-hover:translate-x-[100%]",
+									"transition-all duration-700"
+								)} />
+								
+								{/* 文字内容 */}
+								<span className="relative z-10 flex items-center gap-2">
+									<span className="text-lg">🎊</span>
+									<span>特别活动</span>
+								</span>
+							</button>
 							
 							<Button
-								size="lg"
 								className={cn(
-									"rounded-full px-8 py-6 text-base font-medium",
+									"rounded-full px-8 h-[52px] text-base font-medium",
 									"bg-white text-black hover:bg-white/90"
 								)}
-								onClick={() => {
-									window.location.href = "#小程序://XXxDanceVision/W3DIoGu2VyvFx9e"
-								}}
+								onClick={() => setShowMiniProgramDialog(true)}
 							>
 								跳转进入小程序
 							</Button>
@@ -695,6 +774,42 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 								title="点击查看原图"
 							/>
 						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+			
+			{/* 小程序弹窗 */}
+			<Dialog open={showMiniProgramDialog} onOpenChange={setShowMiniProgramDialog}>
+				<DialogContent className={cn(
+					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					"max-w-[90vw]",
+					"sm:max-w-md"
+				)}>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<Smartphone className="h-5 w-5" />
+							跳转小程序
+						</DialogTitle>
+						<DialogDescription className="text-left text-base text-white/80">
+							点击下方链接打开小程序
+						</DialogDescription>
+					</DialogHeader>
+					
+					{/* 小程序链接 */}
+					<div className="mt-4">
+						<a
+							href={miniProgramLink}
+							className={cn(
+								"block w-full p-4 rounded-lg text-center",
+								"bg-gradient-to-r from-green-500 to-emerald-600",
+								"text-white font-medium text-base",
+								"hover:from-green-400 hover:to-emerald-500",
+								"transition-all duration-200",
+								"break-all"
+							)}
+						>
+							{miniProgramLink}
+						</a>
 					</div>
 				</DialogContent>
 			</Dialog>
