@@ -2,4 +2,4 @@
  * 工具函数
  */
 
-export { cn, formatFileSize } from "@/core/utils"
+export { cn } from "@/core/utils"

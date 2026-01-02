@@ -5,9 +5,9 @@
  */
 
 import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
-import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Settings2, ChevronLeft, ChevronRight, Play, Image, Loader2, Globe, Sparkles } from "lucide-react"
+import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { BackgroundRenderer, useBackground } from "@/themes"
+import { BackgroundRenderer } from "@/themes"
 import { cn } from "@/lib/utils"
 import TextType from "@/components/TextType"
 import {
@@ -18,8 +18,6 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog"
 
-// 是否为开发模式
-const isDev = import.meta.env.DEV
 
 // Logo 组件
 function Logo({ className }: { className?: string }) {
@@ -41,9 +39,8 @@ function Logo({ className }: { className?: string }) {
 	)
 }
 
-// 教程媒体配置
+// 教程媒体配置（简化版 - 只保留视频）
 interface TutorialMedia {
-	gif: string
 	video: string
 }
 
@@ -83,10 +80,7 @@ const quickLinks = [
 		title: "团购核销",
 		description: "如何使用美团/大众点评团购券进行核销",
 		image: null as string | null,
-		tutorial: {
-			gif: "/static/tutorial/write-off.gif",
-			video: "/static/tutorial/write-off.mp4",
-		} as TutorialMedia,
+		tutorial: { video: "/static/tutorial/write-off.mp4" } as TutorialMedia,
 	},
 	{
 		id: "booking",
@@ -95,10 +89,7 @@ const quickLinks = [
 		title: "预订教程",
 		description: "如何在小程序预订教室",
 		image: null as string | null,
-		tutorial: {
-			gif: "/static/tutorial/booking.gif",
-			video: "/static/tutorial/booking.mp4",
-		} as TutorialMedia,
+		tutorial: { video: "/static/tutorial/booking.mp4" } as TutorialMedia,
 	},
 	{
 		id: "action",
@@ -107,10 +98,7 @@ const quickLinks = [
 		title: "开门开灯",
 		description: "通过小程序开门开灯",
 		image: null as string | null,
-		tutorial: {
-			gif: "/static/tutorial/action.gif",
-			video: "/static/tutorial/action.mp4",
-		} as TutorialMedia,
+		tutorial: { video: "/static/tutorial/action.mp4" } as TutorialMedia,
 	},
 ]
 
@@ -138,88 +126,23 @@ function preloadImages() {
 	})
 }
 
-// 已预加载的 GIF 记录
-const preloadedGifs = new Set<string>()
-
-// 教程媒体查看组件
+// 教程媒体查看组件（简化版 - 只显示视频）
 function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
-	// 默认展示视频
-	const [showVideo, setShowVideo] = useState(true)
-	const [gifState, setGifState] = useState<LoadingState>("idle")
 	const [videoState, setVideoState] = useState<LoadingState>("idle")
 	const [loadProgress, setLoadProgress] = useState(0)
-	const [gifProgress, setGifProgress] = useState(0)
 	const videoRef = useRef<HTMLVideoElement>(null)
 	
-	// 组件挂载后立即开始后台加载 GIF（无论当前展示什么）
-	useEffect(() => {
-		// 如果已经预加载过，直接标记为已加载
-		if (preloadedGifs.has(tutorial.gif)) {
-			setGifState("loaded")
-			return
-		}
-		
-		setGifState("loading")
-		setGifProgress(0)
-		
-		const img = new window.Image()
-		
-		// 使用 XHR 获取加载进度
-		const xhr = new XMLHttpRequest()
-		xhr.open("GET", tutorial.gif, true)
-		xhr.responseType = "blob"
-		
-		xhr.onprogress = (e) => {
-			if (e.lengthComputable) {
-				const percent = Math.round((e.loaded / e.total) * 100)
-				setGifProgress(percent)
-				// 只有在展示 GIF 时才更新主进度条
-				if (!showVideo) {
-					setLoadProgress(percent)
-				}
-			}
-		}
-		
-		xhr.onload = () => {
-			if (xhr.status === 200) {
-				const blob = xhr.response
-				img.src = URL.createObjectURL(blob)
-				img.onload = () => {
-					setGifState("loaded")
-					preloadedGifs.add(tutorial.gif)
-					URL.revokeObjectURL(img.src)
-				}
-			} else {
-				setGifState("error")
-			}
-		}
-		
-		xhr.onerror = () => setGifState("error")
-		xhr.send()
-		
-		return () => xhr.abort()
-	}, [tutorial.gif])
-	
-	// 切换到 GIF 时同步进度
-	useEffect(() => {
-		if (!showVideo) {
-			setLoadProgress(gifProgress)
-		}
-	}, [showVideo, gifProgress])
-	
-	// 视频加载进度处理
 	const handleVideoProgress = useCallback(() => {
 		const video = videoRef.current
 		if (video && video.buffered.length > 0) {
 			const buffered = video.buffered.end(video.buffered.length - 1)
 			const duration = video.duration
-			if (duration > 0 && showVideo) {
+			if (duration > 0) {
 				setLoadProgress(Math.round((buffered / duration) * 100))
 			}
 		}
-	}, [showVideo])
+	}, [])
 	
-	// 视频默认开始加载
 	useEffect(() => {
 		if (videoState === "idle") {
 			setVideoState("loading")
@@ -228,117 +151,39 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	}, [videoState])
 	
 	return (
-		<div className="space-y-4">
-			{/* 媒体切换按钮 */}
-			<div className="flex justify-center gap-2">
-				<button
-					onClick={() => setShowVideo(true)}
-					className={cn(
-						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-						showVideo 
-							? "bg-white/20 text-white" 
-							: "bg-white/5 text-white/60 hover:bg-white/10"
-					)}
-				>
-					<Play className="h-4 w-4" />
-					<span>视频教程</span>
-				</button>
-				<button
-					onClick={() => setShowVideo(false)}
-					className={cn(
-						"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-						!showVideo 
-							? "bg-white/20 text-white" 
-							: "bg-white/5 text-white/60 hover:bg-white/10"
-					)}
-				>
-					<Image className="h-4 w-4" />
-					<span>GIF 动图</span>
-					{/* GIF 后台加载指示器 */}
-					{gifState === "loading" && showVideo && (
-						<span className="text-xs text-white/40">({gifProgress}%)</span>
-					)}
-				</button>
-			</div>
-			
-			{/* 媒体内容区域 - 9:16 竖屏比例 */}
-			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
-				{!showVideo ? (
-					// GIF 显示
-					<>
-						{gifState === "loading" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
-								<div className="text-center">
-									<p className="text-sm text-white/80">正在加载动图...</p>
-									<p className="text-xs text-white/50 mt-1">请稍候，文件较大需要一点时间</p>
-								</div>
-								{/* 进度条 */}
-								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-									<div 
-										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
-										style={{ width: `${loadProgress}%` }}
-									/>
-								</div>
-								<p className="text-xs text-white/40">{loadProgress}%</p>
-							</div>
-						)}
-						{gifState === "loaded" && (
-							<img 
-								src={tutorial.gif} 
-								alt="教程动图"
-								className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
-								onClick={() => window.open(tutorial.gif, '_blank')}
-								title="点击查看原图"
-							/>
-						)}
-						{gifState === "error" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-								<p className="text-sm text-red-400">加载失败</p>
-								<p className="text-xs text-white/50">请检查网络后重试</p>
-							</div>
-						)}
-					</>
-				) : (
-					// 视频显示
-					<>
-						{videoState === "loading" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
-								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
-								<div className="text-center">
-									<p className="text-sm text-white/80">正在加载视频...</p>
-									<p className="text-xs text-white/50 mt-1">视频加载中，请耐心等待</p>
-								</div>
-								{/* 进度条 */}
-								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-									<div 
-										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
-										style={{ width: `${loadProgress}%` }}
-									/>
-								</div>
-								<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
-							</div>
-						)}
-						<video
-							ref={videoRef}
-							src={tutorial.video}
-							controls
-							playsInline
-							className="w-full h-full object-contain"
-							onLoadStart={() => setVideoState("loading")}
-							onCanPlay={() => setVideoState("loaded")}
-							onProgress={handleVideoProgress}
-							onError={() => setVideoState("error")}
+		<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
+			{videoState === "loading" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
+					<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+					<div className="text-center">
+						<p className="text-sm text-white/80">正在加载视频...</p>
+					</div>
+					<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+						<div 
+							className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+							style={{ width: `${loadProgress}%` }}
 						/>
-						{videoState === "error" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-								<p className="text-sm text-red-400">视频加载失败</p>
-								<p className="text-xs text-white/50">请检查网络后重试</p>
-							</div>
-						)}
-					</>
-				)}
-			</div>
+					</div>
+					<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
+				</div>
+			)}
+			<video
+				ref={videoRef}
+				src={tutorial.video}
+				controls
+				playsInline
+				className="w-full h-full object-contain"
+				onLoadStart={() => setVideoState("loading")}
+				onCanPlay={() => setVideoState("loaded")}
+				onProgress={handleVideoProgress}
+				onError={() => setVideoState("error")}
+			/>
+			{videoState === "error" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+					<p className="text-sm text-red-400">视频加载失败</p>
+					<p className="text-xs text-white/50">请检查网络后重试</p>
+				</div>
+			)}
 		</div>
 	)
 }
@@ -451,88 +296,7 @@ function QuickLinksMenu() {
 	)
 }
 
-// 开发模式工具栏组件
-function DevToolbar() {
-	const { selectedId, backgrounds, setBackground } = useBackground()
-	const [isExpanded, setIsExpanded] = useState(false)
-	
-	const visibleBackgrounds = backgrounds.filter(bg => !bg.hidden)
-	const currentIndex = visibleBackgrounds.findIndex(bg => bg.id === selectedId)
-	const currentBg = visibleBackgrounds[currentIndex]
-	
-	const prevBg = () => {
-		const newIndex = currentIndex <= 0 ? visibleBackgrounds.length - 1 : currentIndex - 1
-		setBackground(visibleBackgrounds[newIndex].id)
-	}
-	
-	const nextBg = () => {
-		const newIndex = currentIndex >= visibleBackgrounds.length - 1 ? 0 : currentIndex + 1
-		setBackground(visibleBackgrounds[newIndex].id)
-	}
-	
-	if (!isDev) return null
-	
-	return (
-		<div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
-			{/* 背景切换器 */}
-			{isExpanded ? (
-				<div className={cn(
-					"p-3 rounded-2xl min-w-[200px]",
-					"bg-black/60 backdrop-blur-2xl",
-					"border border-white/10",
-					"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]"
-				)}>
-					<div className="flex items-center justify-between mb-2">
-						<span className="text-xs text-white/50 font-medium">DEV 背景切换</span>
-						<button 
-							onClick={() => setIsExpanded(false)}
-							className="text-white/50 hover:text-white transition-colors"
-						>
-							<ChevronDown className="h-4 w-4" />
-						</button>
-					</div>
-					<div className="flex items-center gap-2">
-						<button 
-							onClick={prevBg}
-							className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-						>
-							<ChevronLeft className="h-4 w-4" />
-						</button>
-						<div className="flex-1 text-center">
-							<div className="text-sm font-medium">{currentBg?.name}</div>
-							<div className="text-xs text-white/50">{currentIndex + 1} / {visibleBackgrounds.length}</div>
-						</div>
-						<button 
-							onClick={nextBg}
-							className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-						>
-							<ChevronRight className="h-4 w-4" />
-						</button>
-					</div>
-				</div>
-			) : (
-				<button
-					onClick={() => setIsExpanded(true)}
-					className={cn(
-						"p-3 rounded-full",
-						"bg-black/60 backdrop-blur-2xl",
-						"border border-white/10",
-						"shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
-						"hover:bg-black/70 transition-colors"
-					)}
-				>
-					<Settings2 className="h-5 w-5 text-white/70" />
-				</button>
-			)}
-		</div>
-	)
-}
-
-interface WelcomePageProps {
-	onNavigate: (page: "home" | "docs" | "lab") => void
-}
-
-export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
+export default memo(function WelcomePage() {
 	// 打字效果文本
 	const typingTexts = [
 		"私密空间 · 自由练习",
@@ -552,16 +316,6 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 		}
 	}, [])
 	
-	// 背景切换
-	const { selectedId, backgrounds, setBackground } = useBackground()
-	const visibleBackgrounds = backgrounds.filter(bg => !bg.hidden)
-	const currentIndex = visibleBackgrounds.findIndex(bg => bg.id === selectedId)
-	
-	const nextBackground = useCallback(() => {
-		const newIndex = currentIndex >= visibleBackgrounds.length - 1 ? 0 : currentIndex + 1
-		setBackground(visibleBackgrounds[newIndex].id)
-	}, [currentIndex, visibleBackgrounds, setBackground])
-	
 	// 特别活动弹窗
 	const [showEventDialog, setShowEventDialog] = useState(false)
 	
@@ -576,9 +330,6 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 					<BackgroundRenderer />
 				</Suspense>
 			</div>
-			
-			{/* 开发模式工具栏 */}
-			<DevToolbar />
 			
 			{/* 内容层 */}
 			<div className="relative z-10 min-h-screen flex flex-col">
@@ -600,56 +351,6 @@ export default memo(function WelcomePage({ onNavigate }: WelcomePageProps) {
 							</span>
 						</div>
 						
-						{/* 右侧导航 */}
-						<div className="flex items-center gap-3">
-							{/* 更多按钮 - 暂时隐藏 */}
-							{false && (
-								<button
-									className={cn(
-										"px-5 py-2 rounded-full text-sm font-medium",
-										"bg-white/[0.06] backdrop-blur-xl",
-										"border border-white/[0.1]",
-										"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-										"hover:bg-white/[0.1] transition-all duration-200"
-									)}
-									onClick={() => alert("功能开发中，敬请期待...")}
-								>
-									更多
-								</button>
-							)}
-							
-							{/* 背景切换按钮 */}
-							<button
-								className={cn(
-									"p-2.5 rounded-full",
-									"bg-white/[0.06] backdrop-blur-xl",
-									"border border-white/[0.1]",
-									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-									"hover:bg-white/[0.1] transition-all duration-200"
-								)}
-								onClick={nextBackground}
-								title="切换背景"
-							>
-								<Sparkles className="h-5 w-5" />
-							</button>
-							
-							{/* 球形菜单入口 - 暂时隐藏 */}
-							{false && (
-								<button
-									className={cn(
-										"p-2.5 rounded-full",
-										"bg-white/[0.06] backdrop-blur-xl",
-										"border border-white/[0.1]",
-										"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-										"hover:bg-white/[0.1] transition-all duration-200"
-									)}
-									onClick={() => onNavigate("lab")}
-									title="探索更多"
-								>
-									<Globe className="h-5 w-5" />
-								</button>
-							)}
-						</div>
 					</nav>
 				</header>
 				
