@@ -423,7 +423,7 @@ export default memo(function WelcomePage() {
 										"bg-white/90 text-zinc-900 text-sm font-medium",
 										"shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
 									)}>
-										👆 点击获取 WiFi 密码
+										 点击获取 WiFi 密码 👆
 									</div>
 								</div>
 							)}
