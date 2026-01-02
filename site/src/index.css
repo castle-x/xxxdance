@@ -5,6 +5,18 @@
 @custom-variant dark (&:is(.dark *));
 @custom-variant safari (@supports (hanging-punctuation: first) and (-webkit-appearance: none));
 
+/* 强制使用自定义配色，不跟随浏览器暗色模式 */
+html {
+	color-scheme: dark;
+}
+
+/* 防止系统暗色模式影响组件显示 */
+@media (prefers-color-scheme: dark) {
+	img, video {
+		filter: none !important;
+	}
+}
+
 /* 全局禁止意外滚动条 */
 html, body {
 	overflow: hidden;

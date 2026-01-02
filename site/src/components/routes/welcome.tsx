@@ -5,7 +5,7 @@
  */
 
 import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
-import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Loader2 } from "lucide-react"
+import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Loader2, Wifi, Car, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BackgroundRenderer } from "@/themes"
 import { cn } from "@/lib/utils"
@@ -56,6 +56,15 @@ const quickLinks = [
 		tutorial: null as TutorialMedia | null,
 	},
 	{
+		id: "parking",
+		icon: Car,
+		label: "停车指引",
+		title: "停车指引",
+		description: "📍上海市普陀区长寿路468号中环商务大厦",
+		image: "/static/tutorial/p.png",
+		tutorial: null as TutorialMedia | null,
+	},
+	{
 		id: "wechat",
 		icon: MessageCircle,
 		label: "客服微信",
@@ -81,6 +90,7 @@ const quickLinks = [
 		description: "如何使用美团/大众点评团购券进行核销",
 		image: null as string | null,
 		tutorial: { video: "/static/tutorial/write-off.mp4" } as TutorialMedia,
+		hot: true,
 	},
 	{
 		id: "booking",
@@ -90,6 +100,7 @@ const quickLinks = [
 		description: "如何在小程序预订教室",
 		image: null as string | null,
 		tutorial: { video: "/static/tutorial/booking.mp4" } as TutorialMedia,
+		hot: true,
 	},
 	{
 		id: "action",
@@ -115,6 +126,8 @@ function preloadImages() {
 		...quickLinks.filter(link => link.image).map(link => link.image!),
 		// 特别活动图片
 		"/static/tutorial/newyear.png",
+		// 停车指引
+		"/static/tutorial/p.png",
 	]
 	
 	imagesToPreload.forEach(src => {
@@ -238,7 +251,8 @@ function QuickLinksMenu() {
 									)}
 								>
 									<link.icon className="h-4 w-4 text-white/60" />
-									<span className="text-white/90">{link.label}</span>
+									<span className="flex-1 text-white/90">{link.label}</span>
+									{'hot' in link && link.hot && <span>🔥</span>}
 								</button>
 							))}
 						</div>
@@ -322,6 +336,29 @@ export default memo(function WelcomePage() {
 	// 小程序弹窗
 	const [showMiniProgramDialog, setShowMiniProgramDialog] = useState(false)
 	
+	// WiFi 弹窗
+	const [showWifiDialog, setShowWifiDialog] = useState(false)
+	const [copiedField, setCopiedField] = useState<string | null>(null)
+	
+	// 复制到剪贴板
+	const copyToClipboard = useCallback(async (text: string, field: string) => {
+		try {
+			await navigator.clipboard.writeText(text)
+			setCopiedField(field)
+			setTimeout(() => setCopiedField(null), 2000)
+		} catch {
+			// 降级方案
+			const textarea = document.createElement('textarea')
+			textarea.value = text
+			document.body.appendChild(textarea)
+			textarea.select()
+			document.execCommand('copy')
+			document.body.removeChild(textarea)
+			setCopiedField(field)
+			setTimeout(() => setCopiedField(null), 2000)
+		}
+	}, [])
+	
 	return (
 		<div className="min-h-screen relative overflow-hidden">
 			{/* 固定背景 - 后续发布时会固定一个 */}
@@ -351,6 +388,20 @@ export default memo(function WelcomePage() {
 							</span>
 						</div>
 						
+						{/* WiFi 按钮 */}
+						<button
+							onClick={() => setShowWifiDialog(true)}
+							className={cn(
+								"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+								"bg-white/[0.06] backdrop-blur-xl",
+								"border border-white/[0.1]",
+								"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+								"hover:bg-white/[0.1] transition-all duration-200"
+							)}
+						>
+							<Wifi className="h-4 w-4" />
+							<span>Wifi</span>
+						</button>
 					</nav>
 				</header>
 				
@@ -506,6 +557,68 @@ export default memo(function WelcomePage() {
 								onClick={() => window.open('/static/tutorial/applet_qrcode.png', '_blank')}
 								title="点击查看原图"
 							/>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+			
+			{/* WiFi 弹窗 */}
+			<Dialog open={showWifiDialog} onOpenChange={setShowWifiDialog}>
+				<DialogContent className={cn(
+					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					"max-w-[90vw]",
+					"sm:max-w-sm"
+				)}>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<Wifi className="h-5 w-5" />
+							WiFi 连接信息
+						</DialogTitle>
+						<DialogDescription className="text-left">
+							点击可复制账号或密码
+						</DialogDescription>
+					</DialogHeader>
+					
+					{/* WiFi 信息 */}
+					<div className="mt-4 space-y-3">
+						{/* WiFi 账号 */}
+						<div 
+							onClick={() => copyToClipboard('XXxDanceVision5G', 'ssid')}
+							className={cn(
+								"flex items-center justify-between p-4 rounded-lg cursor-pointer",
+								"bg-white/5 border border-white/10",
+								"hover:bg-white/10 transition-colors"
+							)}
+						>
+							<div>
+								<p className="text-xs text-white/50 mb-1">WiFi 账号</p>
+								<p className="text-lg font-medium text-white">XXxDanceVision5G</p>
+							</div>
+							{copiedField === 'ssid' ? (
+								<Check className="h-5 w-5 text-green-400" />
+							) : (
+								<Copy className="h-5 w-5 text-white/40" />
+							)}
+						</div>
+						
+						{/* WiFi 密码 */}
+						<div 
+							onClick={() => copyToClipboard('XXX888888', 'password')}
+							className={cn(
+								"flex items-center justify-between p-4 rounded-lg cursor-pointer",
+								"bg-white/5 border border-white/10",
+								"hover:bg-white/10 transition-colors"
+							)}
+						>
+							<div>
+								<p className="text-xs text-white/50 mb-1">WiFi 密码</p>
+								<p className="text-lg font-medium text-white font-mono">XXX888888</p>
+							</div>
+							{copiedField === 'password' ? (
+								<Check className="h-5 w-5 text-green-400" />
+							) : (
+								<Copy className="h-5 w-5 text-white/40" />
+							)}
 						</div>
 					</div>
 				</DialogContent>
