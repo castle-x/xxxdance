@@ -1,7 +1,6 @@
 'use client';
 
 import { ElementType, useEffect, useRef, useState, createElement, useMemo, useCallback } from 'react';
-import { gsap } from 'gsap';
 import './TextType.css';
 
 interface TextTypeProps {
@@ -9,7 +8,6 @@ interface TextTypeProps {
   showCursor?: boolean;
   hideCursorWhileTyping?: boolean;
   cursorCharacter?: string | React.ReactNode;
-  cursorBlinkDuration?: number;
   cursorClassName?: string;
   text: string | string[];
   as?: ElementType;
@@ -38,7 +36,6 @@ const TextType = ({
   hideCursorWhileTyping = false,
   cursorCharacter = '|',
   cursorClassName = '',
-  cursorBlinkDuration = 0.5,
   textColors = [],
   variableSpeed,
   onSentenceComplete,
@@ -51,7 +48,6 @@ const TextType = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
-  const cursorRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLElement>(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
@@ -85,18 +81,7 @@ const TextType = ({
     return () => observer.disconnect();
   }, [startOnVisible]);
 
-  useEffect(() => {
-    if (showCursor && cursorRef.current) {
-      gsap.set(cursorRef.current, { opacity: 1 });
-      gsap.to(cursorRef.current, {
-        opacity: 0,
-        duration: cursorBlinkDuration,
-        repeat: -1,
-        yoyo: true,
-        ease: 'power2.inOut'
-      });
-    }
-  }, [showCursor, cursorBlinkDuration]);
+  // 光标闪烁使用 CSS 动画，不再需要 gsap
 
   useEffect(() => {
     if (!isVisible) return;
@@ -183,7 +168,6 @@ const TextType = ({
     </span>,
     showCursor && (
       <span
-        ref={cursorRef}
         className={`text-type__cursor ${cursorClassName} ${shouldHideCursor ? 'text-type__cursor--hidden' : ''}`}
       >
         {cursorCharacter}
