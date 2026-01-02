@@ -432,7 +432,7 @@ export default memo(function WelcomePage() {
 				</header>
 				
 				{/* 主内容区 */}
-				<main className="flex-1 flex items-center justify-center px-4">
+				<main className="flex-1 flex items-center justify-center px-4 pb-16">
 					<div className="text-center max-w-3xl mx-auto">
 						{/* 标签 - 高级毛玻璃效果 */}
 						<div className={cn(
