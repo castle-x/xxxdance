@@ -340,6 +340,34 @@ export default memo(function WelcomePage() {
 	const [showWifiDialog, setShowWifiDialog] = useState(false)
 	const [copiedField, setCopiedField] = useState<string | null>(null)
 	
+	// WiFi 引导气泡
+	const [wifiTipVisible, setWifiTipVisible] = useState(false)
+	const [wifiTipMounted, setWifiTipMounted] = useState(true)
+	
+	// 入场动画 + 2秒后淡出
+	useEffect(() => {
+		// 延迟显示，触发入场动画
+		const showTimer = setTimeout(() => {
+			setWifiTipVisible(true)
+		}, 100)
+		
+		// 2秒后开始淡出
+		const hideTimer = setTimeout(() => {
+			setWifiTipVisible(false)
+		}, 2100)
+		
+		// 淡出动画完成后卸载组件
+		const unmountTimer = setTimeout(() => {
+			setWifiTipMounted(false)
+		}, 2600)
+		
+		return () => {
+			clearTimeout(showTimer)
+			clearTimeout(hideTimer)
+			clearTimeout(unmountTimer)
+		}
+	}, [])
+	
 	// 复制到剪贴板
 	const copyToClipboard = useCallback(async (text: string, field: string) => {
 		try {
@@ -389,19 +417,48 @@ export default memo(function WelcomePage() {
 						</div>
 						
 						{/* WiFi 按钮 */}
-						<button
-							onClick={() => setShowWifiDialog(true)}
-							className={cn(
-								"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
-								"bg-white/[0.06] backdrop-blur-xl",
-								"border border-white/[0.1]",
-								"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-								"hover:bg-white/[0.1] transition-all duration-200"
+						<div className="relative">
+							<button
+								onClick={() => {
+									setShowWifiDialog(true)
+									setWifiTipVisible(false)
+									setWifiTipMounted(false)
+								}}
+								className={cn(
+									"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+									"bg-white/[0.06] backdrop-blur-xl",
+									"border border-white/[0.1]",
+									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+									"hover:bg-white/[0.1] transition-all duration-200"
+								)}
+							>
+								<Wifi className="h-4 w-4" />
+								<span>Wifi</span>
+							</button>
+							
+							{/* 引导气泡 */}
+							{wifiTipMounted && (
+								<div 
+									className="absolute top-full right-0 mt-3 pointer-events-none"
+									style={{
+										opacity: wifiTipVisible ? 1 : 0,
+										transform: wifiTipVisible ? 'translateY(0)' : 'translateY(-8px)',
+										transition: 'opacity 0.4s ease, transform 0.4s ease',
+									}}
+								>
+									{/* 气泡箭头 */}
+									<div className="absolute -top-2 right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white/90" />
+									{/* 气泡内容 */}
+									<div className={cn(
+										"px-4 py-2.5 rounded-xl whitespace-nowrap",
+										"bg-white/90 text-zinc-900 text-sm font-medium",
+										"shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+									)}>
+										👆 点击获取 WiFi 密码
+									</div>
+								</div>
 							)}
-						>
-							<Wifi className="h-4 w-4" />
-							<span>Wifi</span>
-						</button>
+						</div>
 					</nav>
 				</header>
 				
