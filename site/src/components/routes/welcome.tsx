@@ -340,33 +340,8 @@ export default memo(function WelcomePage() {
 	const [showWifiDialog, setShowWifiDialog] = useState(false)
 	const [copiedField, setCopiedField] = useState<string | null>(null)
 	
-	// WiFi 引导气泡
-	const [wifiTipVisible, setWifiTipVisible] = useState(false)
-	const [wifiTipMounted, setWifiTipMounted] = useState(true)
-	
-	// 入场动画 + 2秒后淡出
-	useEffect(() => {
-		// 延迟显示，触发入场动画
-		const showTimer = setTimeout(() => {
-			setWifiTipVisible(true)
-		}, 100)
-		
-		// 2秒后开始淡出
-		const hideTimer = setTimeout(() => {
-			setWifiTipVisible(false)
-		}, 2100)
-		
-		// 淡出动画完成后卸载组件
-		const unmountTimer = setTimeout(() => {
-			setWifiTipMounted(false)
-		}, 2600)
-		
-		return () => {
-			clearTimeout(showTimer)
-			clearTimeout(hideTimer)
-			clearTimeout(unmountTimer)
-		}
-	}, [])
+	// WiFi 引导气泡 - 点击后隐藏
+	const [wifiTipHidden, setWifiTipHidden] = useState(false)
 	
 	// 复制到剪贴板
 	const copyToClipboard = useCallback(async (text: string, field: string) => {
@@ -421,8 +396,7 @@ export default memo(function WelcomePage() {
 							<button
 								onClick={() => {
 									setShowWifiDialog(true)
-									setWifiTipVisible(false)
-									setWifiTipMounted(false)
+									setWifiTipHidden(true)
 								}}
 								className={cn(
 									"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
@@ -436,15 +410,10 @@ export default memo(function WelcomePage() {
 								<span>Wifi</span>
 							</button>
 							
-							{/* 引导气泡 */}
-							{wifiTipMounted && (
+							{/* 引导气泡 - 纯 CSS 动画 */}
+							{!wifiTipHidden && (
 								<div 
-									className="absolute top-full right-0 mt-3 pointer-events-none"
-									style={{
-										opacity: wifiTipVisible ? 1 : 0,
-										transform: wifiTipVisible ? 'translateY(0)' : 'translateY(-8px)',
-										transition: 'opacity 0.4s ease, transform 0.4s ease',
-									}}
+									className="absolute top-full right-0 mt-3 pointer-events-none wifi-tip-bubble"
 								>
 									{/* 气泡箭头 */}
 									<div className="absolute -top-2 right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white/90" />
