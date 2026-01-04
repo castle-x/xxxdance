@@ -116,14 +116,32 @@ const quickLinks = [
 // 媒体加载状态
 type LoadingState = "idle" | "loading" | "loaded" | "error"
 
-// 预加载关键大图（首页加载时调用）
+// 检测是否为 iOS 设备（包括 Safari、微信等）
+const isIOSDevice = () => {
+	if (typeof navigator === 'undefined') return false
+	return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+}
+
+// 检测是否为微信浏览器
+const isWechatBrowser = () => {
+	if (typeof navigator === 'undefined') return false
+	return /MicroMessenger/i.test(navigator.userAgent)
+}
+
+// 是否需要 iOS 特殊处理
+const needIOSVideoFix = () => isIOSDevice() || isWechatBrowser()
+
+// 预加载全部静态资源（首页加载时调用）
 const preloadedImages = new Set<string>()
 
 function preloadImages() {
-	// 只预加载 2 个大图，其他图片让浏览器自然加载
+	// 预加载全部图片
 	const imagesToPreload = [
 		"/static/tutorial/newyear.png",
 		"/static/tutorial/address.png",
+		"/static/tutorial/p.png",
+		"/static/tutorial/service_qrcode.png",
+		"/static/tutorial/applet_qrcode.png",
 	]
 	
 	imagesToPreload.forEach(src => {
@@ -185,11 +203,12 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	const [videoState, setVideoState] = useState<LoadingState>("idle")
 	const [loadProgress, setLoadProgress] = useState(0)
 	const videoRef = useRef<HTMLVideoElement>(null)
+	const isIOS = needIOSVideoFix()
 	
-	// 手动设置 iOS/微信 特定属性（React 不会自动渲染这些）
+	// iOS/微信：手动设置特定属性
 	useEffect(() => {
 		const video = videoRef.current
-		if (video) {
+		if (video && isIOS) {
 			// iOS Safari 必需
 			video.setAttribute("playsinline", "true")
 			video.setAttribute("webkit-playsinline", "true")
@@ -197,9 +216,8 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 			video.setAttribute("x5-playsinline", "true")
 			video.setAttribute("x5-video-player-type", "h5")
 			video.setAttribute("x5-video-player-fullscreen", "true")
-			// 注意：不要调用 video.load()，会中断某些浏览器的加载
 		}
-	}, [tutorial.video])
+	}, [tutorial.video, isIOS])
 	
 	const handleVideoProgress = useCallback(() => {
 		const video = videoRef.current
@@ -219,59 +237,79 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 		}
 	}, [videoState])
 	
-	// 处理视频加载完成（兼容不同浏览器）+ 自动播放
+	// 处理视频加载完成 + 自动播放
 	const handleVideoReady = useCallback(() => {
 		setVideoState("loaded")
-		// 尝试自动播放（用户已点击弹窗，算作交互）
 		const video = videoRef.current
 		if (video && video.paused) {
 			video.play().catch(() => {
-				// iOS 可能需要静音才能自动播放，忽略错误让用户手动点击
+				// 自动播放失败时忽略，让用户手动点击
 			})
 		}
 	}, [])
 	
 	return (
-			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
-						{videoState === "loading" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
-								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
-								<div className="text-center">
-									<p className="text-sm text-white/80">正在加载视频...</p>
-								</div>
-								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-									<div 
-										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
-										style={{ width: `${loadProgress}%` }}
-									/>
-								</div>
-								<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
-							</div>
-						)}
-						<video
-							ref={videoRef}
-							controls
-							playsInline
-							autoPlay
-							muted
-							preload="auto"
-							className="w-full h-full object-contain"
-							onLoadStart={() => setVideoState("loading")}
-							onCanPlay={handleVideoReady}
-							onCanPlayThrough={handleVideoReady}
-							onLoadedData={handleVideoReady}
-							onLoadedMetadata={handleVideoReady}
-							onProgress={handleVideoProgress}
-							onError={() => setVideoState("error")}
-						>
-							<source src={tutorial.video} type="video/mp4" />
-						</video>
-						{videoState === "error" && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-								<p className="text-sm text-red-400">视频加载失败</p>
-								<p className="text-xs text-white/50">请检查网络后重试</p>
-							</div>
-						)}
+		<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
+			{videoState === "loading" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
+					<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+					<div className="text-center">
+						<p className="text-sm text-white/80">正在加载视频...</p>
+					</div>
+					<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+						<div 
+							className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+							style={{ width: `${loadProgress}%` }}
+						/>
+					</div>
+					<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
+				</div>
+			)}
+			
+			{/* 根据设备类型使用不同的视频加载策略 */}
+			{isIOS ? (
+				// iOS/微信：使用 source 标签 + 完整属性
+				<video
+					ref={videoRef}
+					controls
+					playsInline
+					autoPlay
+					muted
+					preload="auto"
+					className="w-full h-full object-contain"
+					onLoadStart={() => setVideoState("loading")}
+					onCanPlay={handleVideoReady}
+					onCanPlayThrough={handleVideoReady}
+					onLoadedData={handleVideoReady}
+					onLoadedMetadata={handleVideoReady}
+					onProgress={handleVideoProgress}
+					onError={() => setVideoState("error")}
+				>
+					<source src={tutorial.video} type="video/mp4" />
+				</video>
+			) : (
+				// 安卓/PC：使用简单的 src 属性（之前正常的方式）
+				<video
+					ref={videoRef}
+					src={tutorial.video}
+					controls
+					playsInline
+					autoPlay
+					muted
+					className="w-full h-full object-contain"
+					onLoadStart={() => setVideoState("loading")}
+					onCanPlay={handleVideoReady}
+					onProgress={handleVideoProgress}
+					onError={() => setVideoState("error")}
+				/>
+			)}
+			
+			{videoState === "error" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+					<p className="text-sm text-red-400">视频加载失败</p>
+					<p className="text-xs text-white/50">请检查网络后重试</p>
+				</div>
+			)}
 		</div>
 	)
 }
@@ -618,7 +656,6 @@ export default memo(function WelcomePage() {
 							🎊 新年特别活动
 						</DialogTitle>
 						<DialogDescription className="text-left whitespace-pre-line">
-							新年福利来袭，扫码了解更多优惠详情
 							💡 首次加载图片可能较慢，请耐心等待
 						</DialogDescription>
 					</DialogHeader>
