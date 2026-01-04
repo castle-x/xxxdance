@@ -247,9 +247,16 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 		}
 	}, [videoState])
 	
-	// 处理视频加载完成（兼容不同浏览器）
+	// 处理视频加载完成（兼容不同浏览器）+ 自动播放
 	const handleVideoReady = useCallback(() => {
 		setVideoState("loaded")
+		// 尝试自动播放（用户已点击弹窗，算作交互）
+		const video = videoRef.current
+		if (video && video.paused) {
+			video.play().catch(() => {
+				// iOS 可能需要静音才能自动播放，忽略错误让用户手动点击
+			})
+		}
 	}, [])
 	
 	return (
