@@ -213,6 +213,22 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	const [loadProgress, setLoadProgress] = useState(0)
 	const videoRef = useRef<HTMLVideoElement>(null)
 	
+	// 手动设置 iOS/微信 特定属性（React 不会自动渲染这些）
+	useEffect(() => {
+		const video = videoRef.current
+		if (video) {
+			// iOS Safari 必需
+			video.setAttribute("playsinline", "true")
+			video.setAttribute("webkit-playsinline", "true")
+			// 微信浏览器
+			video.setAttribute("x5-playsinline", "true")
+			video.setAttribute("x5-video-player-type", "h5")
+			video.setAttribute("x5-video-player-fullscreen", "true")
+			// 尝试预加载
+			video.load()
+		}
+	}, [tutorial.video])
+	
 	const handleVideoProgress = useCallback(() => {
 		const video = videoRef.current
 		if (video && video.buffered.length > 0) {
@@ -230,6 +246,11 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 			setLoadProgress(0)
 		}
 	}, [videoState])
+	
+	// 处理视频加载完成（兼容不同浏览器）
+	const handleVideoReady = useCallback(() => {
+		setVideoState("loaded")
+	}, [])
 	
 	return (
 			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
@@ -252,19 +273,17 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 							ref={videoRef}
 							controls
 							playsInline
-							webkit-playsinline="true"
-							x5-playsinline="true"
-							x5-video-player-type="h5"
-							x5-video-player-fullscreen="true"
 							preload="auto"
 							className="w-full h-full object-contain"
 							onLoadStart={() => setVideoState("loading")}
-							onCanPlay={() => setVideoState("loaded")}
-							onLoadedData={() => setVideoState("loaded")}
+							onCanPlay={handleVideoReady}
+							onCanPlayThrough={handleVideoReady}
+							onLoadedData={handleVideoReady}
+							onLoadedMetadata={handleVideoReady}
 							onProgress={handleVideoProgress}
 							onError={() => setVideoState("error")}
 						>
-							<source src={tutorial.video} type="video/mp4" />
+							<source src={tutorial.video} type="video/mp4; codecs=avc1.42E01E,mp4a.40.2" />
 						</video>
 						{videoState === "error" && (
 							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">

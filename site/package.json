@@ -23,6 +23,7 @@
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.1.12",
+		"@types/minimatch": "^6.0.0",
 		"@types/node": "^22.10.2",
 		"@types/react": "^19.1.11",
 		"@types/react-dom": "^19.1.7",
