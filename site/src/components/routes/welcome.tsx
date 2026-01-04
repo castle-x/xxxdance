@@ -52,8 +52,9 @@ const quickLinks = [
 		icon: MapPin,
 		label: "路线引导",
 		title: "点击查看原图/下滑查看更多内容",
-		description: "📍上海市普陀区长寿路468号中环商务大厦604室\n💡 首次加载图片可能较慢，请耐心等待",
+		description: "📍上海市普陀区长寿路468号中环商务大厦604室",
 		image: "/static/tutorial/address.png",
+		thumbnail: "/static/tutorial/address_thumb.webp",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -63,6 +64,7 @@ const quickLinks = [
 		title: "停车指引",
 		description: "📍上海市普陀区长寿路468号中环商务大厦",
 		image: "/static/tutorial/p.png",
+		thumbnail: "/static/tutorial/p.webp",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -72,6 +74,7 @@ const quickLinks = [
 		title: "客服微信",
 		description: "长按识别或保存图片添加客服微信",
 		image: "/static/tutorial/service_qrcode.png",
+		thumbnail: "/static/tutorial/service_qrcode.webp",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -81,6 +84,7 @@ const quickLinks = [
 		title: "小程序码",
 		description: "长按识别或微信搜xxxdance",
 		image: "/static/tutorial/applet_qrcode.png",
+		thumbnail: "/static/tutorial/applet_qrcode.webp",
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -259,12 +263,30 @@ function DeviceIndicator() {
 	)
 }
 
-// 预加载全部静态资源（首页加载时调用）
+// 预加载静态资源
 const preloadedImages = new Set<string>()
 
-function preloadImages() {
-	// 预加载全部图片
-	const imagesToPreload = [
+// 预加载缩略图（优先级高，首屏需要）
+function preloadThumbnails() {
+	const thumbnails = [
+		"/static/tutorial/newyear_thumb.webp",
+		"/static/tutorial/address_thumb.webp",
+		"/static/tutorial/p.webp",
+		"/static/tutorial/service_qrcode.webp",
+		"/static/tutorial/applet_qrcode.webp",
+	]
+	
+	thumbnails.forEach(src => {
+		if (preloadedImages.has(src)) return
+		preloadedImages.add(src)
+		const img = new window.Image()
+		img.src = src
+	})
+}
+
+// 预加载原图（优先级低，后台加载）
+function preloadFullImages() {
+	const fullImages = [
 		"/static/tutorial/newyear.png",
 		"/static/tutorial/address.png",
 		"/static/tutorial/p.png",
@@ -272,10 +294,9 @@ function preloadImages() {
 		"/static/tutorial/applet_qrcode.png",
 	]
 	
-	imagesToPreload.forEach(src => {
+	fullImages.forEach(src => {
 		if (preloadedImages.has(src)) return
 		preloadedImages.add(src)
-		
 		const img = new window.Image()
 		img.src = src
 	})
@@ -300,29 +321,85 @@ function preloadVideos() {
 	})
 }
 
-// 简单图片组件 - 让浏览器自然渲染，无加载动画
-function SimpleImage({ 
+// 渐进式图片组件 - 先显示缩略图，原图加载完成后平滑过渡
+function ProgressiveImage({ 
 	src, 
+	thumbnail,
 	alt, 
 	className,
 	onClick,
 	title 
 }: { 
 	src: string
+	thumbnail?: string
 	alt: string
 	className?: string
 	onClick?: () => void
 	title?: string
 }) {
+	const [isFullLoaded, setIsFullLoaded] = useState(false)
+	const [showFull, setShowFull] = useState(false)
+	
+	// 预加载原图
+	useEffect(() => {
+		if (!thumbnail) {
+			setShowFull(true)
+			return
+		}
+		
+		const img = new window.Image()
+		img.src = src
+		img.onload = () => {
+			setIsFullLoaded(true)
+			// 延迟一帧再切换，确保渲染流畅
+			requestAnimationFrame(() => setShowFull(true))
+		}
+	}, [src, thumbnail])
+	
+	// 如果没有缩略图，直接显示原图
+	if (!thumbnail) {
+		return (
+			<img
+				src={src}
+				alt={alt}
+				className={className}
+				onClick={onClick}
+				title={title}
+				loading="lazy"
+			/>
+		)
+	}
+	
 	return (
-		<img
-			src={src}
-			alt={alt}
-			className={className}
-			onClick={onClick}
-			title={title}
-			loading="lazy"
-		/>
+		<div className="relative overflow-hidden">
+			{/* 缩略图（模糊底图） */}
+			<img
+				src={thumbnail}
+				alt={alt}
+				className={cn(
+					className,
+					"transition-opacity duration-300",
+					showFull ? "opacity-0" : "opacity-100"
+				)}
+				onClick={onClick}
+				title={title}
+			/>
+			
+			{/* 原图（加载完成后显示） */}
+			{isFullLoaded && (
+				<img
+					src={src}
+					alt={alt}
+					className={cn(
+						className,
+						"absolute inset-0 transition-opacity duration-300",
+						showFull ? "opacity-100" : "opacity-0"
+					)}
+					onClick={onClick}
+					title={title}
+				/>
+			)}
+		</div>
 	)
 }
 
@@ -530,8 +607,9 @@ function QuickLinksMenu() {
 						) : activeDialog?.image ? (
 							// 有静态图片 - 显示图片（点击打开原图）
 							<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-								<SimpleImage 
+								<ProgressiveImage 
 									src={activeDialog.image} 
+									thumbnail={'thumbnail' in activeDialog ? (activeDialog as any).thumbnail : undefined}
 									alt={activeDialog.title}
 									className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
 									onClick={() => window.open(activeDialog.image!, '_blank')}
@@ -565,19 +643,21 @@ export default memo(function WelcomePage() {
 	
 	// 首页加载时预加载所有静态资源
 	useEffect(() => {
-		// 使用 requestIdleCallback 在浏览器空闲时预加载，不影响首屏渲染
-		const loadResources = () => {
-			// 先加载图片（优先级高）
-			preloadImages()
-			// 延迟 2 秒后加载视频（优先级低，避免抢占带宽）
+		// 1. 立即加载缩略图（首屏需要，体积小）
+		preloadThumbnails()
+		
+		// 2. 使用 requestIdleCallback 在浏览器空闲时加载原图和视频
+		const loadFullResources = () => {
+			// 加载原图
+			preloadFullImages()
+			// 延迟 2 秒后加载视频
 			setTimeout(preloadVideos, 2000)
 		}
 		
 		if ('requestIdleCallback' in window) {
-			requestIdleCallback(loadResources)
+			requestIdleCallback(loadFullResources)
 		} else {
-			// 降级方案：延迟 1 秒后加载
-			setTimeout(loadResources, 1000)
+			setTimeout(loadFullResources, 1000)
 		}
 	}, [])
 	
@@ -791,16 +871,14 @@ export default memo(function WelcomePage() {
 						<DialogTitle className="flex items-center gap-2">
 							🎊 新年特别活动
 						</DialogTitle>
-						<DialogDescription className="text-left whitespace-pre-line">
-							💡 首次加载图片可能较慢，请耐心等待
-						</DialogDescription>
-					</DialogHeader>
+						</DialogHeader>
 					
 					{/* 内容区域 */}
 					<div className="mt-4">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<SimpleImage 
+							<ProgressiveImage 
 								src="/static/tutorial/newyear.png" 
+								thumbnail="/static/tutorial/newyear_thumb.webp"
 								alt="新年特别活动"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
 								onClick={() => window.open('/static/tutorial/newyear.png', '_blank')}
@@ -832,8 +910,9 @@ export default memo(function WelcomePage() {
 					{/* 小程序码图片 */}
 					<div className="mt-2">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<SimpleImage 
+							<ProgressiveImage 
 								src="/static/tutorial/applet_qrcode.png" 
+								thumbnail="/static/tutorial/applet_qrcode.webp"
 								alt="小程序码"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
 								onClick={() => window.open('/static/tutorial/applet_qrcode.png', '_blank')}
