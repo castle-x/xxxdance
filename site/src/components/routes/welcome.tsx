@@ -280,6 +280,8 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 							ref={videoRef}
 							controls
 							playsInline
+							autoPlay
+							muted
 							preload="auto"
 							className="w-full h-full object-contain"
 							onLoadStart={() => setVideoState("loading")}
