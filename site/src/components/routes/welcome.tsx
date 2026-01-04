@@ -197,8 +197,7 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 			video.setAttribute("x5-playsinline", "true")
 			video.setAttribute("x5-video-player-type", "h5")
 			video.setAttribute("x5-video-player-fullscreen", "true")
-			// 尝试预加载
-			video.load()
+			// 注意：不要调用 video.load()，会中断某些浏览器的加载
 		}
 	}, [tutorial.video])
 	
