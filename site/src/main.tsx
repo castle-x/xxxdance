@@ -22,9 +22,9 @@ const App = memo(() => {
  */
 const Layout = () => {
 	return (
-		<Suspense fallback={<PageLoading />}>
-			<App />
-		</Suspense>
+			<Suspense fallback={<PageLoading />}>
+				<App />
+			</Suspense>
 	)
 }
 
@@ -33,12 +33,12 @@ const Layout = () => {
  */
 const Root = () => {
 	return (
-		<ThemeVariantProvider>
-			<BackgroundProvider>
+			<ThemeVariantProvider>
+				<BackgroundProvider>
 				<Layout />
 				<Toaster />
-			</BackgroundProvider>
-		</ThemeVariantProvider>
+				</BackgroundProvider>
+			</ThemeVariantProvider>
 	)
 }
 

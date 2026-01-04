@@ -232,42 +232,42 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	}, [videoState])
 	
 	return (
-		<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
-			{videoState === "loading" && (
-				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
-					<Loader2 className="h-8 w-8 animate-spin text-white/60" />
-					<div className="text-center">
-						<p className="text-sm text-white/80">正在加载视频...</p>
-					</div>
-					<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-						<div 
-							className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
-							style={{ width: `${loadProgress}%` }}
-						/>
-					</div>
-					<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
-				</div>
-			)}
-			<video
-				ref={videoRef}
-				src={tutorial.video}
-				controls
-				playsInline
+			<div className="relative rounded-lg overflow-hidden bg-black/30 border border-white/10 aspect-[9/16]">
+						{videoState === "loading" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
+								<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+								<div className="text-center">
+									<p className="text-sm text-white/80">正在加载视频...</p>
+								</div>
+								<div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+									<div 
+										className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+										style={{ width: `${loadProgress}%` }}
+									/>
+								</div>
+								<p className="text-xs text-white/40">{loadProgress > 0 ? `${loadProgress}%` : "准备中..."}</p>
+							</div>
+						)}
+						<video
+							ref={videoRef}
+							src={tutorial.video}
+							controls
+							playsInline
 				webkit-playsinline="true"
 				x5-playsinline="true"
 				preload="metadata"
-				className="w-full h-full object-contain"
-				onLoadStart={() => setVideoState("loading")}
-				onCanPlay={() => setVideoState("loaded")}
-				onProgress={handleVideoProgress}
-				onError={() => setVideoState("error")}
-			/>
-			{videoState === "error" && (
-				<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-					<p className="text-sm text-red-400">视频加载失败</p>
-					<p className="text-xs text-white/50">请检查网络后重试</p>
-				</div>
-			)}
+							className="w-full h-full object-contain"
+							onLoadStart={() => setVideoState("loading")}
+							onCanPlay={() => setVideoState("loaded")}
+							onProgress={handleVideoProgress}
+							onError={() => setVideoState("error")}
+						/>
+						{videoState === "error" && (
+							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+								<p className="text-sm text-red-400">视频加载失败</p>
+								<p className="text-xs text-white/50">请检查网络后重试</p>
+							</div>
+						)}
 		</div>
 	)
 }
