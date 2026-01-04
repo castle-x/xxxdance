@@ -284,23 +284,7 @@ function preloadThumbnails() {
 	})
 }
 
-// 预加载原图（优先级低，后台加载）
-function preloadFullImages() {
-	const fullImages = [
-		"/static/tutorial/newyear.png",
-		"/static/tutorial/address.png",
-		"/static/tutorial/p.png",
-		"/static/tutorial/service_qrcode.png",
-		"/static/tutorial/applet_qrcode.png",
-	]
-	
-	fullImages.forEach(src => {
-		if (preloadedImages.has(src)) return
-		preloadedImages.add(src)
-		const img = new window.Image()
-		img.src = src
-	})
-}
+// 原图不再预加载，用户点击查看原图时才加载
 
 // 预加载所有视频（图片加载完成后调用）
 const preloadedVideos = new Set<string>()
@@ -641,24 +625,14 @@ export default memo(function WelcomePage() {
 		"专业空间 · 自在起舞",
 	]
 	
-	// 首页加载时预加载所有静态资源
-	// 优先级：缩略图 > 视频 > 原图
+	// 首页加载时预加载静态资源（缩略图 + 视频）
+	// 原图不预加载，用户点击查看原图时按需加载
 	useEffect(() => {
-		// 1. 立即加载缩略图（首屏需要，体积小）
+		// 1. 立即加载缩略图
 		preloadThumbnails()
 		
-		// 2. 浏览器空闲时加载视频（用户可能很快点击查看）
-		const loadVideosAndImages = () => {
-			preloadVideos()
-			// 3. 视频加载开始后，延迟加载原图（优先级最低）
-			setTimeout(preloadFullImages, 3000)
-		}
-		
-		if ('requestIdleCallback' in window) {
-			requestIdleCallback(loadVideosAndImages)
-		} else {
-			setTimeout(loadVideosAndImages, 1000)
-		}
+		// 2. 立即加载视频
+		preloadVideos()
 	}, [])
 	
 	// 特别活动弹窗
