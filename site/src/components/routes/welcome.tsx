@@ -638,7 +638,7 @@ export default memo(function WelcomePage() {
 						<div className="flex items-center gap-3">
 							<Logo />
 							<span className="text-lg font-bold tracking-tight">
-								XXx' Dance Vision
+								XXx' Dance
 							</span>
 						</div>
 						
