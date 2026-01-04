@@ -116,10 +116,67 @@ const quickLinks = [
 // 媒体加载状态
 type LoadingState = "idle" | "loading" | "loaded" | "error"
 
-// 检测是否为 iOS 设备（包括 Safari、微信等）
-const isIOSDevice = () => {
-	if (typeof navigator === 'undefined') return false
-	return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+// ========== 设备识别模块 ==========
+// 检测设备类型（mobile/tablet/desktop）
+type DeviceType = "mobile" | "tablet" | "desktop"
+
+const detectDeviceType = (): DeviceType => {
+	if (typeof navigator === 'undefined') return "desktop"
+	const ua = navigator.userAgent
+	
+	// 1. 移动设备检测
+	if (/Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+		return "mobile"
+	}
+	
+	// 2. 平板设备检测（iPad 或 Android 平板）
+	if (/iPad|Tablet|Android(?!.*Mobile)/i.test(ua)) {
+		return "tablet"
+	}
+	
+	// 3. 默认为桌面
+	return "desktop"
+}
+
+// 检测操作系统（顺序很重要！）
+type OSType = "iOS" | "Android" | "HarmonyOS" | "Windows" | "macOS" | "Linux" | "Unknown"
+
+const detectOS = (): OSType => {
+	if (typeof navigator === 'undefined') return "Unknown"
+	const ua = navigator.userAgent
+	const platform = navigator.platform || ""
+	
+	// ✅ 优先级 1: 鸿蒙系统（必须最先检测，UA 包含 "Linux"）
+	if (/OpenHarmony|HarmonyOS/i.test(ua)) {
+		return "HarmonyOS"
+	}
+	
+	// ✅ 优先级 2: iOS（必须在 macOS 之前，UA 包含 "Mac OS X"）
+	if (/iPhone|iPad|iPod/i.test(ua) || platform === "iPhone" || platform === "iPad") {
+		return "iOS"
+	}
+	
+	// ✅ 优先级 3: Android
+	if (/Android/i.test(ua)) {
+		return "Android"
+	}
+	
+	// ✅ 优先级 4: macOS（桌面版，已排除 iOS）
+	if (/Mac OS X/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) {
+		return "macOS"
+	}
+	
+	// ✅ 优先级 5: Windows
+	if (/Windows NT/i.test(ua) || platform === "Win32" || platform === "Win64") {
+		return "Windows"
+	}
+	
+	// ✅ 优先级 6: Linux（最后检测）
+	if (/Linux/i.test(ua) || /Linux/i.test(platform)) {
+		return "Linux"
+	}
+	
+	return "Unknown"
 }
 
 // 检测是否为微信浏览器
@@ -128,8 +185,75 @@ const isWechatBrowser = () => {
 	return /MicroMessenger/i.test(navigator.userAgent)
 }
 
-// 是否需要 iOS 特殊处理
-const needIOSVideoFix = () => isIOSDevice() || isWechatBrowser()
+// 是否需要 iOS 特殊视频处理
+const needIOSVideoFix = () => {
+	const os = detectOS()
+	return os === "iOS" || isWechatBrowser()
+}
+
+// 获取设备图标类型：ios / android / none（PC不显示）
+type DeviceIconType = "ios" | "android" | "none"
+
+const getDeviceIconType = (): DeviceIconType => {
+	const os = detectOS()
+	const deviceType = detectDeviceType()
+	
+	// PC（桌面设备）不显示图标
+	if (deviceType === "desktop") {
+		return "none"
+	}
+	
+	// iOS 显示苹果图标
+	if (os === "iOS") {
+		return "ios"
+	}
+	
+	// 其余（Android、鸿蒙等）显示安卓图标
+	return "android"
+}
+
+// Apple 图标组件（内联 SVG，不增加资源负担）
+function AppleIcon({ className }: { className?: string }) {
+	return (
+		<svg className={cn("h-4 w-4", className)} viewBox="0 0 24 24" fill="currentColor">
+			<path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+		</svg>
+	)
+}
+
+// Android 图标组件（内联 SVG）
+function AndroidIcon({ className }: { className?: string }) {
+	return (
+		<svg className={cn("h-4 w-4", className)} viewBox="0 0 24 24" fill="currentColor">
+			<path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/>
+		</svg>
+	)
+}
+
+// 设备图标显示组件
+function DeviceIndicator() {
+	const [iconType, setIconType] = useState<DeviceIconType>("none")
+	
+	useEffect(() => {
+		setIconType(getDeviceIconType())
+	}, [])
+	
+	if (iconType === "none") return null
+	
+	return (
+		<div className={cn(
+			"flex items-center justify-center w-8 h-8 rounded-full",
+			"bg-white/[0.06] backdrop-blur-xl",
+			"border border-white/[0.1]"
+		)}>
+			{iconType === "ios" ? (
+				<AppleIcon className="text-white/80" />
+			) : (
+				<AndroidIcon className="text-green-400" />
+			)}
+		</div>
+	)
+}
 
 // 预加载全部静态资源（首页加载时调用）
 const preloadedImages = new Set<string>()
@@ -511,42 +635,47 @@ export default memo(function WelcomePage() {
 							</span>
 						</div>
 						
-						{/* WiFi 按钮 */}
-						<div className="relative">
-							<button
-								onClick={() => {
-									setShowWifiDialog(true)
-									setWifiTipHidden(true)
-								}}
-								className={cn(
-									"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
-									"bg-white/[0.06] backdrop-blur-xl",
-									"border border-white/[0.1]",
-									"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
-									"hover:bg-white/[0.1] transition-all duration-200"
-								)}
-							>
-								<Wifi className="h-4 w-4" />
-								<span>Wifi</span>
-							</button>
-							
-							{/* 引导气泡 - 纯 CSS 动画 */}
-							{!wifiTipHidden && (
-								<div 
-									className="absolute top-full right-0 mt-3 pointer-events-none wifi-tip-bubble"
+						{/* WiFi 按钮 + 设备图标 */}
+						<div className="flex items-center gap-2">
+							<div className="relative">
+								<button
+									onClick={() => {
+										setShowWifiDialog(true)
+										setWifiTipHidden(true)
+									}}
+									className={cn(
+										"flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+										"bg-white/[0.06] backdrop-blur-xl",
+										"border border-white/[0.1]",
+										"shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]",
+										"hover:bg-white/[0.1] transition-all duration-200"
+									)}
 								>
-									{/* 气泡箭头 */}
-									<div className="absolute -top-2 right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white/90" />
-									{/* 气泡内容 */}
-									<div className={cn(
-										"px-4 py-2.5 rounded-xl whitespace-nowrap",
-										"bg-white/90 text-zinc-900 text-sm font-medium",
-										"shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
-									)}>
-										 点击获取 WiFi 密码 👆
+									<Wifi className="h-4 w-4" />
+									<span>Wifi</span>
+								</button>
+								
+								{/* 引导气泡 - 纯 CSS 动画 */}
+								{!wifiTipHidden && (
+									<div 
+										className="absolute top-full right-0 mt-3 pointer-events-none wifi-tip-bubble"
+									>
+										{/* 气泡箭头 */}
+										<div className="absolute -top-2 right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white/90" />
+										{/* 气泡内容 */}
+										<div className={cn(
+											"px-4 py-2.5 rounded-xl whitespace-nowrap",
+											"bg-white/90 text-zinc-900 text-sm font-medium",
+											"shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+										)}>
+											 点击获取 WiFi 密码 👆
+										</div>
 									</div>
-								</div>
-							)}
+								)}
+							</div>
+							
+							{/* 设备识别图标（调试用） */}
+							<DeviceIndicator />
 						</div>
 					</nav>
 				</header>
