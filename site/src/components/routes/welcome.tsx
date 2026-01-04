@@ -51,7 +51,7 @@ const quickLinks = [
 		icon: MapPin,
 		label: "路线引导",
 		title: "点击查看原图/下滑查看更多内容",
-		description: "📍上海市普陀区长寿路468号中环商务大厦604室",
+		description: "📍上海市普陀区长寿路468号中环商务大厦604室\n💡 首次加载图片可能较慢，请耐心等待",
 		image: "/static/tutorial/address.png",
 		tutorial: null as TutorialMedia | null,
 	},
@@ -116,18 +116,14 @@ const quickLinks = [
 // 媒体加载状态
 type LoadingState = "idle" | "loading" | "loaded" | "error"
 
-// 预加载所有静态图片（首页加载时调用）
+// 预加载关键大图（首页加载时调用）
 const preloadedImages = new Set<string>()
 
 function preloadImages() {
-	// 收集所有需要预加载的图片
+	// 只预加载 2 个大图，其他图片让浏览器自然加载
 	const imagesToPreload = [
-		// quickLinks 中的静态图片
-		...quickLinks.filter(link => link.image).map(link => link.image!),
-		// 特别活动图片
 		"/static/tutorial/newyear.png",
-		// 停车指引
-		"/static/tutorial/p.png",
+		"/static/tutorial/address.png",
 	]
 	
 	imagesToPreload.forEach(src => {
@@ -158,8 +154,8 @@ function preloadVideos() {
 	})
 }
 
-// 图片加载组件 - 带加载状态
-function ImageWithLoading({ 
+// 简单图片组件 - 让浏览器自然渲染，无加载动画
+function SimpleImage({ 
 	src, 
 	alt, 
 	className,
@@ -172,57 +168,15 @@ function ImageWithLoading({
 	onClick?: () => void
 	title?: string
 }) {
-	const [state, setState] = useState<LoadingState>("loading")
-	const imgRef = useRef<HTMLImageElement>(null)
-	
-	useEffect(() => {
-		setState("loading")
-	}, [src])
-	
 	return (
-		<div className="relative min-h-[200px]">
-			{/* 加载中提示 */}
-			{state === "loading" && (
-				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/30 rounded-lg">
-					<Loader2 className="h-8 w-8 animate-spin text-white/60" />
-					<p className="text-sm text-white/70">图片加载中...</p>
-				</div>
-			)}
-			
-			{/* 加载失败提示 */}
-			{state === "error" && (
-				<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10 bg-black/30 rounded-lg">
-					<p className="text-sm text-red-400">图片加载失败</p>
-					<button
-						onClick={() => {
-							setState("loading")
-							if (imgRef.current) {
-								imgRef.current.src = src
-							}
-						}}
-						className="text-xs text-white/60 hover:text-white/90 underline"
-					>
-						点击重试
-					</button>
-				</div>
-			)}
-			
-			{/* 图片 */}
-			<img
-				ref={imgRef}
-				src={src}
-				alt={alt}
-				className={cn(
-					className,
-					state === "loading" && "opacity-0",
-					state === "error" && "opacity-30"
-				)}
-				onClick={state === "loaded" ? onClick : undefined}
-				title={state === "loaded" ? title : undefined}
-				onLoad={() => setState("loaded")}
-				onError={() => setState("error")}
-			/>
-		</div>
+		<img
+			src={src}
+			alt={alt}
+			className={className}
+			onClick={onClick}
+			title={title}
+			loading="lazy"
+		/>
 	)
 }
 
@@ -395,7 +349,7 @@ function QuickLinksMenu() {
 							{activeDialog && <activeDialog.icon className="h-5 w-5" />}
 							{activeDialog?.title}
 						</DialogTitle>
-						<DialogDescription className="text-left text-base text-white/80">
+						<DialogDescription className="text-left text-base text-white/80 whitespace-pre-line">
 							{activeDialog?.description}
 						</DialogDescription>
 					</DialogHeader>
@@ -408,7 +362,7 @@ function QuickLinksMenu() {
 						) : activeDialog?.image ? (
 							// 有静态图片 - 显示图片（点击打开原图）
 							<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-								<ImageWithLoading 
+								<SimpleImage 
 									src={activeDialog.image} 
 									alt={activeDialog.title}
 									className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
@@ -664,15 +618,16 @@ export default memo(function WelcomePage() {
 						<DialogTitle className="flex items-center gap-2">
 							🎊 新年特别活动
 						</DialogTitle>
-						<DialogDescription className="text-left">
+						<DialogDescription className="text-left whitespace-pre-line">
 							新年福利来袭，扫码了解更多优惠详情
+							💡 首次加载图片可能较慢，请耐心等待
 						</DialogDescription>
 					</DialogHeader>
 					
 					{/* 内容区域 */}
 					<div className="mt-4">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<ImageWithLoading 
+							<SimpleImage 
 								src="/static/tutorial/newyear.png" 
 								alt="新年特别活动"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
@@ -705,7 +660,7 @@ export default memo(function WelcomePage() {
 					{/* 小程序码图片 */}
 					<div className="mt-2">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<ImageWithLoading 
+							<SimpleImage 
 								src="/static/tutorial/applet_qrcode.png" 
 								alt="小程序码"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
