@@ -1,12 +1,17 @@
-# 静态资源长期缓存（1年）- JS/CSS 带 hash，可安全缓存
+# 静态资源长期缓存
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# 静态文件缓存（30天）- 图片、视频等
+# 视频文件 - 支持 Range 请求（iOS 必需）
+/static/tutorial/*.mp4
+  Accept-Ranges: bytes
+  Cache-Control: public, max-age=31536000, immutable
+
+# 图片等静态文件
 /static/*
   Cache-Control: public, max-age=2592000
 
-# HTML 不缓存（确保更新）
+# HTML 不缓存
 /index.html
   Cache-Control: no-cache
 
@@ -15,4 +20,3 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-

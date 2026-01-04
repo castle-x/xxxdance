@@ -139,6 +139,74 @@ function preloadImages() {
 	})
 }
 
+// 图片加载组件 - 带加载状态
+function ImageWithLoading({ 
+	src, 
+	alt, 
+	className,
+	onClick,
+	title 
+}: { 
+	src: string
+	alt: string
+	className?: string
+	onClick?: () => void
+	title?: string
+}) {
+	const [state, setState] = useState<LoadingState>("loading")
+	const imgRef = useRef<HTMLImageElement>(null)
+	
+	useEffect(() => {
+		setState("loading")
+	}, [src])
+	
+	return (
+		<div className="relative min-h-[200px]">
+			{/* 加载中提示 */}
+			{state === "loading" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/30 rounded-lg">
+					<Loader2 className="h-8 w-8 animate-spin text-white/60" />
+					<p className="text-sm text-white/70">图片加载中...</p>
+				</div>
+			)}
+			
+			{/* 加载失败提示 */}
+			{state === "error" && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10 bg-black/30 rounded-lg">
+					<p className="text-sm text-red-400">图片加载失败</p>
+					<button
+						onClick={() => {
+							setState("loading")
+							if (imgRef.current) {
+								imgRef.current.src = src
+							}
+						}}
+						className="text-xs text-white/60 hover:text-white/90 underline"
+					>
+						点击重试
+					</button>
+				</div>
+			)}
+			
+			{/* 图片 */}
+			<img
+				ref={imgRef}
+				src={src}
+				alt={alt}
+				className={cn(
+					className,
+					state === "loading" && "opacity-0",
+					state === "error" && "opacity-30"
+				)}
+				onClick={state === "loaded" ? onClick : undefined}
+				title={state === "loaded" ? title : undefined}
+				onLoad={() => setState("loaded")}
+				onError={() => setState("error")}
+			/>
+		</div>
+	)
+}
+
 // 教程媒体查看组件（简化版 - 只显示视频）
 function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	const [videoState, setVideoState] = useState<LoadingState>("idle")
@@ -185,6 +253,9 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 				src={tutorial.video}
 				controls
 				playsInline
+				webkit-playsinline="true"
+				x5-playsinline="true"
+				preload="metadata"
 				className="w-full h-full object-contain"
 				onLoadStart={() => setVideoState("loading")}
 				onCanPlay={() => setVideoState("loaded")}
@@ -281,12 +352,12 @@ function QuickLinksMenu() {
 					{/* 内容区域 */}
 					<div className="mt-2">
 						{activeDialog?.tutorial ? (
-							// 有教程媒体 - 显示 GIF/视频
+							// 有教程媒体 - 显示视频
 							<TutorialMediaViewer tutorial={activeDialog.tutorial} />
 						) : activeDialog?.image ? (
 							// 有静态图片 - 显示图片（点击打开原图）
 							<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-								<img 
+								<ImageWithLoading 
 									src={activeDialog.image} 
 									alt={activeDialog.title}
 									className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
@@ -543,7 +614,7 @@ export default memo(function WelcomePage() {
 					{/* 内容区域 */}
 					<div className="mt-4">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<img 
+							<ImageWithLoading 
 								src="/static/tutorial/newyear.png" 
 								alt="新年特别活动"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
@@ -576,7 +647,7 @@ export default memo(function WelcomePage() {
 					{/* 小程序码图片 */}
 					<div className="mt-2">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-							<img 
+							<ImageWithLoading 
 								src="/static/tutorial/applet_qrcode.png" 
 								alt="小程序码"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
