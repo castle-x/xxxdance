@@ -642,22 +642,22 @@ export default memo(function WelcomePage() {
 	]
 	
 	// 首页加载时预加载所有静态资源
+	// 优先级：缩略图 > 视频 > 原图
 	useEffect(() => {
 		// 1. 立即加载缩略图（首屏需要，体积小）
 		preloadThumbnails()
 		
-		// 2. 使用 requestIdleCallback 在浏览器空闲时加载原图和视频
-		const loadFullResources = () => {
-			// 加载原图
-			preloadFullImages()
-			// 延迟 2 秒后加载视频
-			setTimeout(preloadVideos, 2000)
+		// 2. 浏览器空闲时加载视频（用户可能很快点击查看）
+		const loadVideosAndImages = () => {
+			preloadVideos()
+			// 3. 视频加载开始后，延迟加载原图（优先级最低）
+			setTimeout(preloadFullImages, 3000)
 		}
 		
 		if ('requestIdleCallback' in window) {
-			requestIdleCallback(loadFullResources)
+			requestIdleCallback(loadVideosAndImages)
 		} else {
-			setTimeout(loadFullResources, 1000)
+			setTimeout(loadVideosAndImages, 1000)
 		}
 	}, [])
 	
