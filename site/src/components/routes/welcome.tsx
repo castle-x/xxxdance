@@ -42,6 +42,7 @@ function Logo({ className }: { className?: string }) {
 // 教程媒体配置（简化版 - 只保留视频）
 interface TutorialMedia {
 	video: string
+	videoAndroid?: string  // 可选：安卓专用视频源（用于解决兼容性问题）
 }
 
 // 快速入口项目配置
@@ -89,7 +90,10 @@ const quickLinks = [
 		title: "团购核销",
 		description: "如何使用美团/大众点评团购券进行核销",
 		image: null as string | null,
-		tutorial: { video: "/static/tutorial/write-off.mp4" } as TutorialMedia,
+		tutorial: { 
+			video: "/static/tutorial/write-off.mp4",
+			videoAndroid: "/static/tutorial/write-off_old.mp4"  // 安卓使用旧版视频
+		} as TutorialMedia,
 		hot: true,
 	},
 	{
@@ -329,6 +333,9 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 	const videoRef = useRef<HTMLVideoElement>(null)
 	const isIOS = needIOSVideoFix()
 	
+	// 根据设备类型选择视频源：安卓用 videoAndroid（如有），iOS/其他用 video
+	const videoSrc = (!isIOS && tutorial.videoAndroid) ? tutorial.videoAndroid : tutorial.video
+	
 	// iOS/微信：手动设置特定属性
 	useEffect(() => {
 		const video = videoRef.current
@@ -341,7 +348,7 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 			video.setAttribute("x5-video-player-type", "h5")
 			video.setAttribute("x5-video-player-fullscreen", "true")
 		}
-	}, [tutorial.video, isIOS])
+	}, [videoSrc, isIOS])
 	
 	const handleVideoProgress = useCallback(() => {
 		const video = videoRef.current
@@ -409,13 +416,13 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 					onProgress={handleVideoProgress}
 					onError={() => setVideoState("error")}
 				>
-					<source src={tutorial.video} type="video/mp4" />
+					<source src={videoSrc} type="video/mp4" />
 				</video>
 			) : (
-				// 安卓/PC：使用简单的 src 属性（之前正常的方式）
+				// 安卓/PC：使用简单的 src 属性 + 可选的安卓专用视频源
 				<video
 					ref={videoRef}
-					src={tutorial.video}
+					src={videoSrc}
 					controls
 					playsInline
 					autoPlay
