@@ -311,7 +311,7 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 							onProgress={handleVideoProgress}
 							onError={() => setVideoState("error")}
 						>
-							<source src={tutorial.video} type="video/mp4; codecs=avc1.42E01E,mp4a.40.2" />
+							<source src={tutorial.video} type="video/mp4" />
 						</video>
 						{videoState === "error" && (
 							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
