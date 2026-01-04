@@ -250,18 +250,22 @@ function TutorialMediaViewer({ tutorial }: { tutorial: TutorialMedia }) {
 						)}
 						<video
 							ref={videoRef}
-							src={tutorial.video}
 							controls
 							playsInline
-				webkit-playsinline="true"
-				x5-playsinline="true"
-				preload="metadata"
+							webkit-playsinline="true"
+							x5-playsinline="true"
+							x5-video-player-type="h5"
+							x5-video-player-fullscreen="true"
+							preload="auto"
 							className="w-full h-full object-contain"
 							onLoadStart={() => setVideoState("loading")}
 							onCanPlay={() => setVideoState("loaded")}
+							onLoadedData={() => setVideoState("loaded")}
 							onProgress={handleVideoProgress}
 							onError={() => setVideoState("error")}
-						/>
+						>
+							<source src={tutorial.video} type="video/mp4" />
+						</video>
 						{videoState === "error" && (
 							<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
 								<p className="text-sm text-red-400">视频加载失败</p>
