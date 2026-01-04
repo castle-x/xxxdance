@@ -139,6 +139,25 @@ function preloadImages() {
 	})
 }
 
+// 预加载所有视频（图片加载完成后调用）
+const preloadedVideos = new Set<string>()
+
+function preloadVideos() {
+	// 收集所有需要预加载的视频
+	const videosToPreload = quickLinks
+		.filter(link => link.tutorial?.video)
+		.map(link => link.tutorial!.video)
+	
+	videosToPreload.forEach(src => {
+		if (preloadedVideos.has(src)) return
+		preloadedVideos.add(src)
+		
+		// 使用 fetch 预加载视频到浏览器缓存
+		fetch(src, { method: 'GET', cache: 'force-cache' })
+			.catch(() => {}) // 静默处理错误
+	})
+}
+
 // 图片加载组件 - 带加载状态
 function ImageWithLoading({ 
 	src, 
@@ -422,14 +441,21 @@ export default memo(function WelcomePage() {
 		"专业空间 · 自在起舞",
 	]
 	
-	// 首页加载时预加载所有静态图片
+	// 首页加载时预加载所有静态资源
 	useEffect(() => {
 		// 使用 requestIdleCallback 在浏览器空闲时预加载，不影响首屏渲染
+		const loadResources = () => {
+			// 先加载图片（优先级高）
+			preloadImages()
+			// 延迟 2 秒后加载视频（优先级低，避免抢占带宽）
+			setTimeout(preloadVideos, 2000)
+		}
+		
 		if ('requestIdleCallback' in window) {
-			requestIdleCallback(() => preloadImages())
+			requestIdleCallback(loadResources)
 		} else {
 			// 降级方案：延迟 1 秒后加载
-			setTimeout(preloadImages, 1000)
+			setTimeout(loadResources, 1000)
 		}
 	}, [])
 	
