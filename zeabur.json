@@ -1,0 +1,10 @@
+{
+  "build": {
+    "command": "cd site && npm install && npm run build",
+    "output": "site/dist"
+  },
+  "deploy": {
+    "type": "static"
+  }
+}
+
