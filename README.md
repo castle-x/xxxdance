@@ -1,68 +1,13 @@
 # XXxDance
 
-<p align="center">
-  <strong>文档教程展示站点</strong><br>
-  支持教程、GIF、视频等多媒体内容展示
-</p>
+个人商业项目，仅供参考学习。
 
----
+## 声明
 
-## ✨ 特性
+- 本项目为个人商业用途开发
+- 代码仅供参考，请勿直接用于商业目的
+- 如有问题或建议，欢迎交流
 
-- 📱 **移动端优先** - 专为手机用户优化的阅读体验
-- 🎨 **多主题支持** - 明亮、暗黑、魔幻三种主题
-- ✨ **丰富动画** - ReactBits 高级动画组件
-- 📝 **Markdown 支持** - 支持 Markdown 文档渲染
-- 🎬 **多媒体支持** - GIF、视频等内容展示
-
-## 🚀 快速开始
-
-### 开发模式
-
-```bash
-cd site
-npm install
-npm run dev
-```
-
-访问 http://localhost:5173
-
-### 构建部署
-
-```bash
-cd site
-npm run build
-```
-
-`dist` 目录可部署到任何静态托管服务：
-- Zeabur
-- Vercel
-- Netlify
-- GitHub Pages
-
-## 🛠 技术栈
-
-- **前端框架**: React 19 + TypeScript
-- **构建工具**: Vite
-- **样式方案**: Tailwind CSS v4
-- **动画库**: Motion (Framer Motion)
-- **UI 组件**: Radix UI + shadcn/ui
-- **动画组件**: react-bits
-
-## 📁 项目结构
-
-```
-xxxdance/
-├── site/                 # 前端项目
-│   ├── src/
-│   │   ├── components/   # UI 组件
-│   │   ├── themes/       # 主题系统（毛玻璃、背景效果）
-│   │   ├── hooks/        # React Hooks
-│   │   └── lib/          # 工具函数
-│   └── public/           # 静态资源
-└── README.md
-```
-
-## 📄 许可证
+## License
 
 [MIT License](LICENSE)
