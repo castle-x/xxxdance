@@ -5,6 +5,14 @@
  */
 
 import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
+
+// CDN 配置：生产环境使用 jsDelivr 加速，开发环境使用本地文件
+const CDN_BASE = import.meta.env.PROD
+	? 'https://cdn.jsdelivr.net/gh/castle-x/XXxDance@main/site/public'
+	: ''
+
+// 静态资源路径辅助函数
+const assetUrl = (path: string) => `${CDN_BASE}${path}`
 import { ChevronDown, MapPin, MessageCircle, Smartphone, ShoppingBag, CalendarCheck, Loader2, Wifi, Car, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BackgroundRenderer } from "@/themes"
@@ -53,8 +61,8 @@ const quickLinks = [
 		label: "路线引导",
 		title: "点击查看原图/下滑查看更多内容",
 		description: "📍上海市普陀区长寿路468号中环商务大厦604室",
-		image: "/static/tutorial/address.png",
-		thumbnail: "/static/tutorial/address_thumb.webp",
+		image: assetUrl("/static/tutorial/address.png"),
+		thumbnail: assetUrl("/static/tutorial/address_thumb.webp"),
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -63,8 +71,8 @@ const quickLinks = [
 		label: "停车指引",
 		title: "停车指引",
 		description: "📍上海市普陀区长寿路468号中环商务大厦",
-		image: "/static/tutorial/p.png",
-		thumbnail: "/static/tutorial/p.webp",
+		image: assetUrl("/static/tutorial/p.png"),
+		thumbnail: assetUrl("/static/tutorial/p.webp"),
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -73,8 +81,8 @@ const quickLinks = [
 		label: "客服微信",
 		title: "客服微信",
 		description: "长按识别或保存图片添加客服微信",
-		image: "/static/tutorial/service_qrcode.png",
-		thumbnail: "/static/tutorial/service_qrcode.webp",
+		image: assetUrl("/static/tutorial/service_qrcode.png"),
+		thumbnail: assetUrl("/static/tutorial/service_qrcode.webp"),
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -83,8 +91,8 @@ const quickLinks = [
 		label: "小程序码",
 		title: "小程序码",
 		description: "长按识别或微信搜xxxdance",
-		image: "/static/tutorial/applet_qrcode.png",
-		thumbnail: "/static/tutorial/applet_qrcode.webp",
+		image: assetUrl("/static/tutorial/applet_qrcode.png"),
+		thumbnail: assetUrl("/static/tutorial/applet_qrcode.webp"),
 		tutorial: null as TutorialMedia | null,
 	},
 	{
@@ -95,8 +103,8 @@ const quickLinks = [
 		description: "如何使用美团/大众点评团购券进行核销",
 		image: null as string | null,
 		tutorial: { 
-			video: "/static/tutorial/write-off.mp4",
-			videoAndroid: "/static/tutorial/write-off_old.mp4"  // 安卓使用旧版视频
+			video: assetUrl("/static/tutorial/write-off.mp4"),
+			videoAndroid: assetUrl("/static/tutorial/write-off_old.mp4")  // 安卓使用旧版视频
 		} as TutorialMedia,
 		hot: true,
 	},
@@ -107,7 +115,7 @@ const quickLinks = [
 		title: "预订教程",
 		description: "如何在小程序预订教室",
 		image: null as string | null,
-		tutorial: { video: "/static/tutorial/booking.mp4" } as TutorialMedia,
+		tutorial: { video: assetUrl("/static/tutorial/booking.mp4") } as TutorialMedia,
 		hot: true,
 	},
 	{
@@ -117,7 +125,7 @@ const quickLinks = [
 		title: "开门开灯",
 		description: "通过小程序开门开灯",
 		image: null as string | null,
-		tutorial: { video: "/static/tutorial/action.mp4" } as TutorialMedia,
+		tutorial: { video: assetUrl("/static/tutorial/action.mp4") } as TutorialMedia,
 	},
 ]
 
@@ -269,11 +277,11 @@ const preloadedImages = new Set<string>()
 // 预加载缩略图（优先级高，首屏需要）
 function preloadThumbnails() {
 	const thumbnails = [
-		"/static/tutorial/newyear_thumb.webp",
-		"/static/tutorial/address_thumb.webp",
-		"/static/tutorial/p.webp",
-		"/static/tutorial/service_qrcode.webp",
-		"/static/tutorial/applet_qrcode.webp",
+		assetUrl("/static/tutorial/newyear_thumb.webp"),
+		assetUrl("/static/tutorial/address_thumb.webp"),
+		assetUrl("/static/tutorial/p.webp"),
+		assetUrl("/static/tutorial/service_qrcode.webp"),
+		assetUrl("/static/tutorial/applet_qrcode.webp"),
 	]
 	
 	thumbnails.forEach(src => {
@@ -851,11 +859,11 @@ export default memo(function WelcomePage() {
 					<div className="mt-4">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
 							<ProgressiveImage 
-								src="/static/tutorial/newyear.png" 
-								thumbnail="/static/tutorial/newyear_thumb.webp"
+								src={assetUrl("/static/tutorial/newyear.png")}
+								thumbnail={assetUrl("/static/tutorial/newyear_thumb.webp")}
 								alt="新年特别活动"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-								onClick={() => window.open('/static/tutorial/newyear.png', '_blank')}
+								onClick={() => window.open(assetUrl('/static/tutorial/newyear.png'), '_blank')}
 								title="点击查看原图"
 							/>
 						</div>
@@ -885,11 +893,11 @@ export default memo(function WelcomePage() {
 					<div className="mt-2">
 						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
 							<ProgressiveImage 
-								src="/static/tutorial/applet_qrcode.png" 
-								thumbnail="/static/tutorial/applet_qrcode.webp"
+								src={assetUrl("/static/tutorial/applet_qrcode.png")}
+								thumbnail={assetUrl("/static/tutorial/applet_qrcode.webp")}
 								alt="小程序码"
 								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-								onClick={() => window.open('/static/tutorial/applet_qrcode.png', '_blank')}
+								onClick={() => window.open(assetUrl('/static/tutorial/applet_qrcode.png'), '_blank')}
 								title="点击查看原图"
 							/>
 						</div>
