@@ -1,8 +1,0 @@
-{
-  "build": {
-    "command": "cd site && npm install && npm run build"
-  },
-  "start": {
-    "command": "cd site && npm run start"
-  }
-}
