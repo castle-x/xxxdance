@@ -1,10 +1,8 @@
 {
   "build": {
-    "command": "cd site && npm install && npm run build",
-    "output": "site/dist"
+    "command": "cd site && npm install && npm run build"
   },
-  "deploy": {
-    "type": "static"
+  "start": {
+    "command": "cd site && npm run start"
   }
 }
-
