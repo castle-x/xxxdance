@@ -7,9 +7,10 @@
 		"dev": "vite --host",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "npx serve dist -l 3000 -s"
+		"start": "serve dist -l 3000 -s"
 	},
 	"dependencies": {
+		"serve": "^14.2.4",
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@radix-ui/react-slot": "^1.2.3",
 		"@radix-ui/react-toast": "^1.2.15",
