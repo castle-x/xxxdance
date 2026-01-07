@@ -271,6 +271,7 @@ function preloadThumbnails() {
 		assetUrl("/static/tutorial/address_thumb.webp"),
 		assetUrl("/static/tutorial/p.webp"),
 		assetUrl("/static/tutorial/service_qrcode.webp"),
+		assetUrl("/static/tutorial/applet_qrcode.webp"),
 	]
 	
 	thumbnails.forEach(src => {
@@ -635,6 +636,9 @@ export default memo(function WelcomePage() {
 	// 特别活动弹窗
 	const [showEventDialog, setShowEventDialog] = useState(false)
 	
+	// 小程序弹窗
+	const [showMiniProgramDialog, setShowMiniProgramDialog] = useState(false)
+	
 	// WiFi 弹窗
 	const [showWifiDialog, setShowWifiDialog] = useState(false)
 	const [copiedField, setCopiedField] = useState<string | null>(null)
@@ -857,6 +861,39 @@ export default memo(function WelcomePage() {
 				</DialogContent>
 			</Dialog>
 			
+			{/* 小程序弹窗 */}
+			<Dialog open={showMiniProgramDialog} onOpenChange={setShowMiniProgramDialog}>
+				<DialogContent className={cn(
+					"bg-zinc-900/95 backdrop-blur-xl border-white/10",
+					"max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none",
+					"top-[1rem] translate-y-0",
+					"sm:max-w-md"
+				)}>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<Smartphone className="h-5 w-5" />
+							小程序码
+						</DialogTitle>
+						<DialogDescription className="text-left text-base text-white/80">
+							长按识别或微信搜xxxdance
+						</DialogDescription>
+					</DialogHeader>
+					
+					{/* 小程序码图片 */}
+					<div className="mt-2">
+						<div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+							<ProgressiveImage 
+								src={assetUrl("/static/tutorial/applet_qrcode.png")}
+								thumbnail={assetUrl("/static/tutorial/applet_qrcode.webp")}
+								alt="小程序码"
+								className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+								onClick={() => window.open(assetUrl('/static/tutorial/applet_qrcode.png'), '_blank')}
+								title="点击查看原图"
+							/>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 			
 			{/* WiFi 弹窗 */}
 			<Dialog open={showWifiDialog} onOpenChange={setShowWifiDialog}>
