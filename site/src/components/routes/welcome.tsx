@@ -549,7 +549,17 @@ function QuickLinksMenu() {
 								<button
 									key={link.id}
 									onClick={() => {
-										trackEvent(EVENTS.MENU_CLICK, { item: link.id, label: link.label })
+										// 根据菜单项 ID 追踪对应事件
+										const menuEvents: Record<string, string> = {
+											route: EVENTS.MENU_ROUTE,
+											parking: EVENTS.MENU_PARKING,
+											wechat: EVENTS.MENU_WECHAT,
+											miniprogram: EVENTS.MENU_MINIPROGRAM,
+											groupbuy: EVENTS.MENU_GROUPBUY,
+											booking: EVENTS.MENU_BOOKING,
+											action: EVENTS.MENU_ACTION,
+										}
+										trackEvent(menuEvents[link.id] || `menu_${link.id}`)
 										setActiveDialog(link)
 										setIsOpen(false)
 									}}
@@ -704,7 +714,7 @@ export default memo(function WelcomePage() {
 							<div className="relative">
 								<button
 									onClick={() => {
-										trackEvent(EVENTS.WIFI_DIALOG_OPEN)
+										trackEvent(EVENTS.BTN_WIFI)
 										setShowWifiDialog(true)
 										setWifiTipHidden(true)
 									}}
@@ -793,7 +803,7 @@ export default memo(function WelcomePage() {
 									"hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.5)]"
 								)}
 								onClick={() => {
-									trackEvent(EVENTS.EVENT_DIALOG_OPEN)
+									trackEvent(EVENTS.BTN_SPECIAL_EVENT)
 									setShowEventDialog(true)
 								}}
 							>
@@ -829,7 +839,7 @@ export default memo(function WelcomePage() {
 									"bg-white text-black hover:bg-white/90"
 								)}
 								onClick={() => {
-									trackEvent(EVENTS.MINIPROGRAM_OPEN)
+									trackEvent(EVENTS.BTN_MINIPROGRAM)
 									setShowMiniProgramDialog(true)
 								}}
 							>

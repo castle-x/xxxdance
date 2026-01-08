@@ -41,34 +41,40 @@ export function trackEvent(
 
 /**
  * 预定义的事件名称常量
- * 使用常量可以避免拼写错误，便于统一管理
+ * 命名规则：功能_动作，清晰表达用户行为
  */
 export const EVENTS = {
-	// ===== 菜单相关 =====
+	// ===== 首页主按钮 =====
+	/** 点击"特别活动"按钮 */
+	BTN_SPECIAL_EVENT: 'btn_special_event',
+	/** 点击"跳转小程序"按钮 */
+	BTN_MINIPROGRAM: 'btn_miniprogram',
+	/** 点击"WiFi"按钮 */
+	BTN_WIFI: 'btn_wifi',
+	
+	// ===== 感兴趣菜单 =====
 	/** 打开感兴趣菜单 */
 	MENU_OPEN: 'menu_open',
-	/** 点击菜单项 */
-	MENU_CLICK: 'menu_click',
-	
-	// ===== 弹窗相关 =====
-	/** 打开特别活动弹窗 */
-	EVENT_DIALOG_OPEN: 'event_dialog_open',
-	/** 打开小程序弹窗 */
-	MINIPROGRAM_OPEN: 'miniprogram_open',
-	/** 打开 WiFi 弹窗 */
-	WIFI_DIALOG_OPEN: 'wifi_dialog_open',
+	/** 点击菜单-路线引导 */
+	MENU_ROUTE: 'menu_route',
+	/** 点击菜单-停车指引 */
+	MENU_PARKING: 'menu_parking',
+	/** 点击菜单-客服微信 */
+	MENU_WECHAT: 'menu_wechat',
+	/** 点击菜单-小程序码 */
+	MENU_MINIPROGRAM: 'menu_miniprogram',
+	/** 点击菜单-团购核销 */
+	MENU_GROUPBUY: 'menu_groupbuy',
+	/** 点击菜单-预订教程 */
+	MENU_BOOKING: 'menu_booking',
+	/** 点击菜单-开门开灯 */
+	MENU_ACTION: 'menu_action',
 	
 	// ===== WiFi 操作 =====
-	/** 复制 WiFi 名称 */
+	/** 复制 WiFi 账号 */
 	WIFI_COPY_SSID: 'wifi_copy_ssid',
 	/** 复制 WiFi 密码 */
 	WIFI_COPY_PASSWORD: 'wifi_copy_password',
-	
-	// ===== 教程相关 =====
-	/** 播放教程视频 */
-	TUTORIAL_VIDEO_PLAY: 'tutorial_video_play',
-	/** 查看原图 */
-	IMAGE_VIEW_FULL: 'image_view_full',
 } as const
 
 /**
