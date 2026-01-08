@@ -5,6 +5,7 @@
  */
 
 import { memo, Suspense, useState, useEffect, useRef, useCallback } from "react"
+import { trackEvent, EVENTS } from "@/lib/analytics"
 
 // CDN 配置：生产环境使用 jsDelivr 加速，开发环境使用本地文件
 const CDN_BASE = import.meta.env.PROD
@@ -514,7 +515,10 @@ function QuickLinksMenu() {
 			{/* 菜单按钮 - 高级毛玻璃大按钮 */}
 			<div className="relative">
 				<button
-					onClick={() => setIsOpen(!isOpen)}
+					onClick={() => {
+						if (!isOpen) trackEvent(EVENTS.MENU_OPEN)
+						setIsOpen(!isOpen)
+					}}
 					className={cn(
 						"flex items-center gap-2 px-8 h-[52px] rounded-full text-base font-medium",
 						"bg-white/[0.06] backdrop-blur-2xl",
@@ -545,6 +549,7 @@ function QuickLinksMenu() {
 								<button
 									key={link.id}
 									onClick={() => {
+										trackEvent(EVENTS.MENU_CLICK, { item: link.id, label: link.label })
 										setActiveDialog(link)
 										setIsOpen(false)
 									}}
@@ -699,6 +704,7 @@ export default memo(function WelcomePage() {
 							<div className="relative">
 								<button
 									onClick={() => {
+										trackEvent(EVENTS.WIFI_DIALOG_OPEN)
 										setShowWifiDialog(true)
 										setWifiTipHidden(true)
 									}}
@@ -786,7 +792,10 @@ export default memo(function WelcomePage() {
 									"transition-all duration-300",
 									"hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.5)]"
 								)}
-								onClick={() => setShowEventDialog(true)}
+								onClick={() => {
+									trackEvent(EVENTS.EVENT_DIALOG_OPEN)
+									setShowEventDialog(true)
+								}}
 							>
 								{/* 渐变背景层 - 流动动画 */}
 								<span className={cn(
@@ -819,7 +828,10 @@ export default memo(function WelcomePage() {
 									"rounded-full px-8 h-[52px] text-base font-medium",
 									"bg-white text-black hover:bg-white/90"
 								)}
-								onClick={() => setShowMiniProgramDialog(true)}
+								onClick={() => {
+									trackEvent(EVENTS.MINIPROGRAM_OPEN)
+									setShowMiniProgramDialog(true)
+								}}
 							>
 								跳转进入小程序
 							</Button>
@@ -916,7 +928,10 @@ export default memo(function WelcomePage() {
 					<div className="mt-4 space-y-3">
 						{/* WiFi 账号 */}
 						<div 
-							onClick={() => copyToClipboard('XXxDanceVision5G', 'ssid')}
+							onClick={() => {
+								trackEvent(EVENTS.WIFI_COPY_SSID)
+								copyToClipboard('XXxDanceVision5G', 'ssid')
+							}}
 							className={cn(
 								"flex items-center justify-between p-4 rounded-lg cursor-pointer",
 								"bg-white/5 border border-white/10",
@@ -936,7 +951,10 @@ export default memo(function WelcomePage() {
 						
 						{/* WiFi 密码 */}
 						<div 
-							onClick={() => copyToClipboard('XXX888888', 'password')}
+							onClick={() => {
+								trackEvent(EVENTS.WIFI_COPY_PASSWORD)
+								copyToClipboard('XXX888888', 'password')
+							}}
 							className={cn(
 								"flex items-center justify-between p-4 rounded-lg cursor-pointer",
 								"bg-white/5 border border-white/10",
